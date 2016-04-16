@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
+'''
+Preprocess data by performing procrustes analysis on the tooth landmarks.
+See the paper by Amy Ross (https://cse.sc.edu/~songwang/CourseProj/proj2004/ross/ross.pdf)
+for a summary of procrustes analysis.
+
+Step 1 - translation -translational components can be
+    removed from an object by translating the object so that the mean of all
+    the object's points (i.e. its centroid) lies at the origin.
+Step 2 - scaling
+Step 3 - rotate
+'''
 import numpy as np
 
-#	step 1 - procrustes analysis: translation -translational components can be removed from an object 
-#	by translating the object so that the mean of all the object's points (i.e. its centroid) lies at the origin.
 
 def centroidnp(x,y):
     '''
@@ -26,7 +35,6 @@ def translate(x,y,centroidx, centroidy):
     translcentroidy = y - centroidy
     return translcentroidx, translcentroidy
 		
-#step2 procustes - scaling
 
 def scaling(transx,transy):
     '''
