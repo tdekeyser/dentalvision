@@ -1,2 +1,1 @@
-#### dentalvision
-Computer vision algorithm
+dentalvision
