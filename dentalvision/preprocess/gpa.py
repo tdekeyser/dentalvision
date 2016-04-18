@@ -17,11 +17,12 @@ def gpa(shapes):
         achive convergence. However, GPA is not guaranteed to converge.
         Increase the tolerated difference to fasten convergence.
     
-    in: list of 2xC arrays
-    out: approximate mean shape 2xC array, list of aligned shapes w.r.t. ams
+    in: matrix of 1xC vectors in form (x1, ..., xC, ..., y1, ..., yC)
+    out: approximate mean shape 1xC vector, matrix of aligned shapes w.r.t. ams
     '''
+    rows, columns = shapes.shape
     # get a random seed as approximate mean shape
-    mean_shape = shapes[0]
+    mean_shape = shapes[0,:]
     aligner = ShapeAligner(mean_shape)
     new_mean = np.zeros_like(mean_shape)
 
@@ -31,19 +32,15 @@ def gpa(shapes):
     while mean_difference > float(0.000001):
         new_mean = mean_shape
         aligner.set_mean_shape(new_mean)
-        # align all images w.r.t. the mean
-        aligned = []
-        aligned_sum = np.zeros_like(new_mean)
-        for shape in shapes:
-            aligned_shape = aligner.align(shape)
-            aligned.append(aligned_shape)
-            aligned_sum += aligned_shape
+        for i in range(rows):
+            shape = shapes[i,:]
+            shapes[i,:] = aligner.align(shapes[i,:])
         # calculate the new mean shape
-        mean_shape = aligned_sum/len(aligned)
+        mean_shape = np.sum(shapes, axis=0)/rows
         # recalculate difference
         mean_difference = np.sum(mean_shape - new_mean)
 
-    return mean_shape, aligned
+    return mean_shape, shapes
 
 
 class ShapeAligner(object):
@@ -63,18 +60,23 @@ class ShapeAligner(object):
         self.set_mean_shape(mean_shape)
     
     def set_mean_shape(self, shape):
-        self.mean_shape = shape
+        x, y = np.split(shape, 2)
+        self.mean_shape = np.array([x, y])
     
     def align(self, shape):
-        '''       
-        In: 2xC array shape
-                2xC array mean_shape
-        Out: 2xC aligned shape
+        ''' 
+        All arrays in form (x1, ..., xC, ..., y1, ..., yC)      
+        In: 1xC array shape
+            1xC array mean_shape
+        Out: 1xC aligned shape
         '''
-        translated = self.__translate(shape)
+        x, y = np.split(shape, 2)
+        stacked_shape = np.array([x, y])
+        # perform aligning
+        translated = self.__translate(stacked_shape)
         scaled = self.__scale(translated)
         aligned = self.__rotate(scaled, self.mean_shape)
-        return aligned
+        return np.hstack((aligned[0], aligned[1]))
 
     def __compute_centroid(self, x, y):
         '''Compute the centroid: the average of an array of coordinates'''
