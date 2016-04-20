@@ -1,5 +1,4 @@
 *.pdf
 *.pyc
-__init__.py
 
 Project Data/*
