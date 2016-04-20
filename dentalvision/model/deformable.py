@@ -44,7 +44,7 @@ def create_deformable_model(paths):
     plot_eigenvectors(mean, eigenvectors)
 
     # create DeformableModel instance
-    return
+    return DeformableModel(eigenvalues, eigenvectors, mean)
 
 
 def load(path):
@@ -66,9 +66,9 @@ class DeformableModel(object):
     Based on shape parameters, it is able to create a
     variation on the mean shape.
     '''
-    def __init__(self, eigenvectors, eigenvalues, mean):
-    	self.eigenvectors = eigenvectors
+    def __init__(self, eigenvalues, eigenvectors, mean):
     	self.eigenvalues = eigenvalues
+    	self.eigenvectors = eigenvectors
     	self.mean = mean
     	self.length = mean.size
 
