@@ -2,4 +2,4 @@
 *.pyc
 __init__.py
 
-dentalvision/Project Data/*
+Project Data/*

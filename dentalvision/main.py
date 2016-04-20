@@ -49,12 +49,12 @@ def plot_gpa(mean, aligned_shapes):
     '''
     # plot mean
     mx, my = np.split(mean, 2)
-    plt.plot(mx, my)
+    plt.plot(mx, my, marker='o')
     # plot first i aligned deviations
     for i in range(3):
         a = aligned_shapes[i,:]
         ax, ay = np.split(a, 2)
-        plt.plot(ax, ay)
+        plt.plot(ax, ay, marker='o')
     axes = plt.gca()
     axes.set_xlim([-1,1])
     plt.show()
@@ -66,7 +66,7 @@ def plot_eigenvectors(mean, eigenvectors):
     Centroid of mean must be the origin!
     '''
     mx, my = np.split(mean, 2)
-    plt.plot(mx, my)
+    plt.plot(mx, my, marker='o')
 
     axes = plt.gca()
     axes.set_xlim([-1,1])
