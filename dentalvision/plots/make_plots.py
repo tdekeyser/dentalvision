@@ -1,6 +1,7 @@
 '''
 Create plots of particular stages of the project.
 '''
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -60,14 +61,22 @@ def plot_eigenvectors(mean, eigenvectors):
 
 
 def plot_deformablemodel(model):
-    x = model.deform(np.zeros(52))
-    y = model.deform(np.zeros(52)+0.1)
+    z = np.zeros(52)
 
+    # recreate the mean
+    x = model.deform(z)
     mx, my = np.split(x, 2)
-    nx, ny = np.split(y, 2)
-
     plt.plot(mx, my)
-    plt.plot(nx, ny)
+
+    # create variations
+    for i in range(2):
+        limit = 3*math.sqrt(model.eigenvalues[i])
+        z[i] = -1*limit
+        y = model.deform(z)
+        nx, ny = np.split(y, 2)
+        plt.plot(nx, ny)
+
     axes = plt.gca()
     axes.set_xlim([-1, 1])
+    axes.set_ylim([-0.5, 0.5])
     plt.show()
