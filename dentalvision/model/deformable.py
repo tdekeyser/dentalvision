@@ -15,7 +15,7 @@ import os
 import numpy as np
 from preprocess.gpa import gpa
 from preprocess.pca import pca
-from plots.make_plots import plot_gpa, plot_eigenvectors
+from plots.make_plots import plot
 
 
 def create_deformable_model(paths):
@@ -27,24 +27,29 @@ def create_deformable_model(paths):
             This process will return an amount of eigenvectors and
             a deformable model that can construct deviations from
             the mean image.
+    Step 3: Create a deformable model from the processed data
+
     In: list of directories of the landmark data
     Out: DeformableModel instance created with preprocessed data.
     '''
     # find all shapes in target directory
     shapes = []
     for path in paths:
-    	shapes += [load(path + s) for s in os.listdir(path) if s.endswith('.txt')]
+        shapes += [load(path + s) for s in os.listdir(path) if s.endswith('.txt')]
 
     # perform gpa
     mean, aligned = gpa(np.asarray(shapes))
-    plot_gpa(mean, aligned)
+    plot('gpa', mean, aligned)
 
     # perform PCA
     eigenvalues, eigenvectors, mean = pca(aligned, mean=mean, max_variance=0.98)
-    plot_eigenvectors(mean, eigenvectors)
+    plot('eigenvectors', mean, eigenvectors)
 
     # create DeformableModel instance
-    return DeformableModel(eigenvalues, eigenvectors, mean)
+    model = DeformableModel(eigenvalues, eigenvectors, mean)
+    plot('deformablemodel', model)
+
+    return model
 
 
 def load(path):
@@ -67,21 +72,19 @@ class DeformableModel(object):
     variation on the mean shape.
     '''
     def __init__(self, eigenvalues, eigenvectors, mean):
-    	self.eigenvalues = eigenvalues
-    	self.eigenvectors = eigenvectors
-    	self.mean = mean
-    	self.length = mean.size
+        self.eigenvalues = eigenvalues
+        self.eigenvectors = eigenvectors
+        self.mean = mean
+        self.length = mean.size
 
     def deform(self, shape_param):
-    	'''
-    	Reconstruct and image based on principal components and a set of parameters
-    	that define a deformable model (see Cootes p. 6 eq. 2)
-   		
-   		in: 1xC vector mean shape
-    		RxT matrix of eigenvectors P
-        	Tx1 vector deformable model b
-        out: 1xC deformed image
-    	'''
-    	return self.mean + (self.eigenvectors*shape_param).T
+        '''
+        Reconstruct and image based on principal components and a set of parameters
+        that define a deformable model (see Cootes p. 6 eq. 2)
 
-        
+        in: 1xC vector mean shape
+            RxT matrix of eigenvectors P
+            Tx1 vector deformable model b
+        out: 1xC deformed image
+        '''
+        return self.mean + self.eigenvectors.dot(shape_param).T

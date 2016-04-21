@@ -31,8 +31,8 @@ class AlignmentFinder(object):
             s, defines the scaling
             delta, defines the rotation
         '''
-        self.shape1 = np.vstack(np.split(shape1, 2))
-        self.shape2 = np.vstack(np.split(shape2, 2))
+        self.shape1 = Shape(shape1)
+        self.shape2 = Shape(shape2)
 
         # TODO
         # see p. 24-25 in Cootes

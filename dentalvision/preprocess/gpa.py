@@ -7,7 +7,6 @@ for a summary of (generalised) procrustes analysis.
 @author: Tina Smets, Tom De Keyser
 '''
 import numpy as np
-from align import Shape
 
 
 def gpa(shapes):
@@ -59,7 +58,8 @@ class ShapeAligner(object):
         self.set_mean_shape(mean_shape)
 
     def set_mean_shape(self, shape):
-        self.mean_shape = Shape(shape).matrix
+        x, y = np.split(shape, 2)
+        self.mean_shape = np.vstack((x, y))
 
     def align(self, shape):
         '''
@@ -68,7 +68,8 @@ class ShapeAligner(object):
         In: 1xC array shape
         Out: 1xC aligned shape
         '''
-        stacked_shape = Shape(shape).matrix
+        x, y = np.split(shape, 2)
+        stacked_shape = np.vstack((x, y))
         # perform aligning
         translated = self.__translate(stacked_shape)
         scaled = self.__scale(translated)
