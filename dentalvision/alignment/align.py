@@ -28,7 +28,7 @@ class CoreAlign(object):
 
     def scale_and_rotate(self, subject, s, theta, inverse=False):
         '''Rotate over theta and scale by s'''
-        rotation_matrix = np.vector([
+        rotation_matrix = np.array([
                             [s*math.cos(theta), -1*s*math.sin(theta)],
                             [s*math.sin(theta), s*math.cos(theta)]
                             ])
