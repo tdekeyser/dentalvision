@@ -75,9 +75,9 @@ class Aligner(CoreAlign, CoreFinder):
         # find/perform transformations
         Tx, Ty = self.find_translation(subject, target)
         # first translate before scaling and rotating
-        translated = self.translate(subject, Tx, Ty)
+        # translated = self.translate(subject, Tx, Ty)
         # compute a and b
-        a, b = self.get_transformation_parameters(translated, target)
+        a, b = self.get_transformation_parameters(subject, target)
         s = self.find_scale(a, b)
         theta = self.find_rotation_angle(a, b)
 

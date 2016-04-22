@@ -49,7 +49,7 @@ def create_pdm(paths):
     model = PointDistributionModel(eigenvalues, eigenvectors, mean)
     plot('deformablemodel', model)
 
-    return model, aligned
+    return model, shapes
 
 
 def load(path):

@@ -54,8 +54,8 @@ class CoreAlign(object):
         '''
         Computes an inverse transformation of target
         '''
-        scaled_and_rotated = self.scale_and_rotate(target, s, theta, inverse=True)
-        return self.translate(scaled_and_rotated, -1*Tx, -1*Ty)
+        translated = self.translate(target, -1*Tx, -1*Ty)
+        return self.scale_and_rotate(translated, 1/s, theta, inverse=True)
 
 
 class CoreFinder(object):
@@ -85,8 +85,8 @@ class CoreFinder(object):
         return math.sqrt(a**2 + b**2)
 
     def find_rotation_angle(self, a, b):
-        '''Return angle in degrees'''
-        return math.atan(b/a)
+        '''Return angle'''
+        return math.degrees(math.atan(b/a))
 
     def find_translation(self, subject, target):
         '''

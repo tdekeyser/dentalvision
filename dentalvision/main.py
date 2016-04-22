@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
 from pdm.model import create_pdm
@@ -14,23 +15,34 @@ def run():
         ]
     model, landmarks = create_pdm(paths)
 
-    #############TESTS
+    print '**Point Distribution Model created.**'
+    print '====================================='
+
+    # ############TESTS
 
     mean = Shape(model.mean)
     targ = Shape(landmarks[0])
+    print targ.centroid()
 
-    # aligner = Aligner()
-    # Tx, Ty, s, theta = aligner.get_pose_parameters(subj, targ)
+    aligner = Aligner()
+    Tx, Ty, s, theta = aligner.get_pose_parameters(mean, targ)
+    print Tx, Ty, s, theta
 
-    Tx, Ty, s, theta, b = match(model, landmarks[0])
-    print b
+    targy = aligner.invert_transform(targ, Tx, Ty, s, theta)
+    print targy.matrix
+    print targy.centroid()
 
-    asm = ActiveShapeModel(model)
-    transformed = asm.transform(Tx, Ty, s, theta, b)
+    # Tx, Ty, s, theta, b = match(model, landmarks[0])
+    # print b
+
+    # asm = ActiveShapeModel(model)
+    # transformed = asm.transform(Tx, Ty, s, theta, b)
+    # trmean = asm.transform(Tx, Ty, s, theta, np.zeros(model.dimension))
 
     plt.plot(mean.x, mean.y, color='g', marker='o')
-    plt.plot(targ.x, targ.y, color='r', marker='o')
-    plt.plot(transformed.x, transformed.y, color='b', marker='o')
+    plt.plot(targy.x, targy.y, color='r', marker='o')
+    # plt.plot(targ.x, targ.y, color='g', marker='o')
+    # plt.plot(transformed.x, transformed.y, color='b', marker='o')
     plt.show()
 
 
