@@ -74,7 +74,7 @@ def plot_deformablemodel(model):
         z[i] = -1*limit
         y = model.deform(z)
         nx, ny = np.split(y, 2)
-        plt.plot(nx, ny)
+        plt.plot(nx, ny, marker='o')
 
     axes = plt.gca()
     axes.set_xlim([-1, 1])

@@ -13,14 +13,14 @@ parameters.
 '''
 import os
 import numpy as np
-from preprocess.gpa import gpa
-from preprocess.pca import pca
-from plots.make_plots import plot
+from gpa import gpa
+from pca import pca
+from plots.plot import plot
 
 
-def create_deformable_model(paths):
+def create_pdm(paths):
     '''
-    Create a new deformable model based on landmark data.
+    Create a new point distribution model based on landmark data.
 
     Step 1: Generalised Procrustes Analysis on the landmark data
     Step 2: Principal Component Analysis on the GPAed landmark data
@@ -45,11 +45,11 @@ def create_deformable_model(paths):
     eigenvalues, eigenvectors, mean = pca(aligned, mean=mean, max_variance=0.98)
     plot('eigenvectors', mean, eigenvectors)
 
-    # create DeformableModel instance
-    model = DeformableModel(eigenvalues, eigenvectors, mean)
+    # create PointDistributionModel instance
+    model = PointDistributionModel(eigenvalues, eigenvectors, mean)
     plot('deformablemodel', model)
 
-    return model
+    return model, aligned
 
 
 def load(path):
@@ -57,14 +57,12 @@ def load(path):
     load and parse the data, and return arrays of x and y coordinates
     '''
     data = np.loadtxt(path)
-    x = data[::2,]
-    y = data[1::2,]
+    x = data[::2, ]
+    y = data[1::2, ]
     return np.hstack((x, y))
 
 
-# Would it be useful to create a method for aligning the model with new image points?
-# Or simply do the alignment in the Match algorithm?
-class DeformableModel(object):
+class PointDistributionModel(object):
     '''
     Model created based on a mean image and a matrix
     of eigenvectors and corresponding eigenvalues.
@@ -72,6 +70,7 @@ class DeformableModel(object):
     variation on the mean shape.
     '''
     def __init__(self, eigenvalues, eigenvectors, mean):
+        self.dimension = eigenvalues.size
         self.eigenvalues = eigenvalues
         self.eigenvectors = eigenvectors
         self.mean = mean
@@ -79,12 +78,10 @@ class DeformableModel(object):
 
     def deform(self, shape_param):
         '''
-        Reconstruct and image based on principal components and a set of parameters
-        that define a deformable model (see Cootes p. 6 eq. 2)
+        Reconstruct and image based on principal components and a set of
+        parameters that define a deformable model (see Cootes p. 6 eq. 2)
 
-        in: 1xC vector mean shape
-            RxT matrix of eigenvectors P
-            Tx1 vector deformable model b
+        in: Tx1 vector deformable model b
         out: 1xC deformed image
         '''
         return self.mean + self.eigenvectors.dot(shape_param).T

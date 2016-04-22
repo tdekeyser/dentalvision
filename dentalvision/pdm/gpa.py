@@ -7,6 +7,8 @@ for a summary of (generalised) procrustes analysis.
 @author: Tina Smets, Tom De Keyser
 '''
 import numpy as np
+from alignment.shape import Shape
+from alignment.align import CoreAlign
 
 
 def gpa(shapes):
@@ -42,7 +44,7 @@ def gpa(shapes):
     return mean_shape, shapes
 
 
-class ShapeAligner(object):
+class ShapeAligner(CoreAlign):
     '''
     Aligns shapes according to a mean shape. Contains method
     to set a mean shape. Main method is the align method that takes a shape
@@ -58,8 +60,7 @@ class ShapeAligner(object):
         self.set_mean_shape(mean_shape)
 
     def set_mean_shape(self, shape):
-        x, y = np.split(shape, 2)
-        self.mean_shape = np.vstack((x, y))
+        self.mean_shape = Shape(shape)
 
     def align(self, shape):
         '''
@@ -68,19 +69,13 @@ class ShapeAligner(object):
         In: 1xC array shape
         Out: 1xC aligned shape
         '''
-        x, y = np.split(shape, 2)
-        stacked_shape = np.vstack((x, y))
         # perform aligning
-        translated = self.__translate(stacked_shape)
-        scaled = self.__scale(translated)
-        aligned = self.__rotate(scaled, self.mean_shape)
-        return np.hstack((aligned[0], aligned[1]))
+        translated = self.translate_to_origin(Shape(shape))
+        scaled = self.normalize(translated)
+        aligned = self.rotate_to_target(scaled, self.mean_shape)
+        return aligned.array
 
-    def __compute_centroid(self, x, y):
-        '''Compute the centroid: the average of an array of coordinates'''
-        return (np.sum(x)/x.shape, np.sum(y)/y.shape)
-
-    def __translate(self, shape):
+    def translate_to_origin(self, shape):
         '''
         Move all shapes to a common center, most likely the origin (0,0)
 
@@ -88,29 +83,20 @@ class ShapeAligner(object):
             array y
         Out = array, array
         '''
-        x, y = shape[0, :], shape[1, :]
         # compute centroid
-        centr_x, centr_y = self.__compute_centroid(x, y)
+        centr_x, centr_y = shape.centroid()
         # translate w.r.t. centroid
-        return np.array([x - centr_x, y - centr_y])
+        return Shape([shape.x - centr_x, shape.y - centr_y])
 
-    def __scale(self, shape):
+    def rotate_to_target(self, subject, target):
         '''
-        Perform isomorphic scaling on input arrays
+        Rotate shape such that it aligns with the target shape
 
-        out: scaled array x, array y
-        '''
-        x, y = shape[0, :], shape[1, :]
-        return np.array([x/np.linalg.norm(x), y/np.linalg.norm(y)])
-
-    def __rotate(self, shape, mean_shape):
-        '''
-        Rotate shape such that it aligns with the mean shape
-
-        out: rotated Rx2 shape
+        in: Shapes
+        out: rotated Rx2 matrix of subject
         '''
         # perform singular value decomposition (svd) to get U, S, V'
-        u, s, v = np.linalg.svd(mean_shape.dot(np.transpose(shape)))
-        # multiply VU' with shape to get the rotation
+        u, s, v = np.linalg.svd(target.matrix.dot(np.transpose(subject.matrix)))
+        # multiply VU' with subject to get the rotated matrix
         vu = np.transpose(v).dot(np.transpose(u))
-        return vu.dot(shape)
+        return Shape(vu.dot(subject.matrix))
