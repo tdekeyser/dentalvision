@@ -15,14 +15,10 @@ def run():
         ]
     model, landmarks = create_pdm(paths)
 
-    print '**Point Distribution Model created.**'
-    print '====================================='
-
     # ############TESTS
 
     mean = Shape(model.mean)
     targ = Shape(landmarks[0])
-    print targ.centroid()
 
     aligner = Aligner()
     Tx, Ty, s, theta = aligner.get_pose_parameters(mean, targ)
@@ -36,8 +32,8 @@ def run():
     # print b
 
     # asm = ActiveShapeModel(model)
-    # transformed = asm.transform(Tx, Ty, s, theta, b)
-    # trmean = asm.transform(Tx, Ty, s, theta, np.zeros(model.dimension))
+    # targy = asm.transform(Tx, Ty, s, theta, b)
+    # mean = asm.transform(Tx, Ty, s, theta, np.zeros(model.dimension))
 
     plt.plot(mean.x, mean.y, color='g', marker='o')
     plt.plot(targy.x, targy.y, color='r', marker='o')

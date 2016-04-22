@@ -28,7 +28,7 @@ class CoreAlign(object):
 
     def scale_and_rotate(self, subject, s, theta, inverse=False):
         '''Rotate over theta and scale by s'''
-        rotation_matrix = np.array([
+        rotation_matrix = np.vector([
                             [s*math.cos(theta), -1*s*math.sin(theta)],
                             [s*math.sin(theta), s*math.cos(theta)]
                             ])
@@ -75,9 +75,9 @@ class CoreFinder(object):
             theta = tan^-1(b/a)
         '''
         # compute denominator
-        denom = np.linalg.norm(subject.array)**2
+        denom = np.linalg.norm(subject.vector)**2
         # compute numerators
-        num_a = np.dot(subject.array, target.array.T)
+        num_a = np.dot(subject.vector, target.vector.T)
         num_b = np.sum(subject.x.dot(target.y) - subject.y.dot(target.x))
         return num_a/denom, num_b/denom
 

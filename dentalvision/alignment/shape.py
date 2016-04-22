@@ -33,7 +33,7 @@ class Shape(object):
         self.reset_matrix()
 
     def reset_matrix(self):
-        self.array = np.hstack((self.x, self.y))
+        self.vector = np.hstack((self.x, self.y))
         self.matrix = np.vstack((self.x, self.y))
 
     def centroid(self):

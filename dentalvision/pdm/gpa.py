@@ -73,7 +73,7 @@ class ShapeAligner(CoreAlign):
         translated = self.translate_to_origin(Shape(shape))
         scaled = self.normalize(translated)
         aligned = self.rotate_to_target(scaled, self.mean_shape)
-        return aligned.array
+        return aligned.vector
 
     def translate_to_origin(self, shape):
         '''

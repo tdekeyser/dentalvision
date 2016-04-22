@@ -27,6 +27,7 @@ def match(pdmodel, image_points):
 
     # start iteration
     b_new = np.zeros_like(b) + 0.1
+    
     while np.sum(b_new - b) > 0.00000001:
         # GENERATE model points
         b = b_new
@@ -37,7 +38,7 @@ def match(pdmodel, image_points):
         # align image with x
         y = aligner.invert_transform(image, Tx, Ty, s, theta)
         # project y into the tangent plane to mean
-        projected_y = y.array/np.dot(y.array, pdmodel.mean.T)
+        projected_y = y.vector/np.dot(y.vector, pdmodel.mean.T)
         # update model parameters to projected y
         b_new = np.dot(pdmodel.eigenvectors.T, projected_y - pdmodel.mean)
 
