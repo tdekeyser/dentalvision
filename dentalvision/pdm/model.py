@@ -20,7 +20,7 @@ from alignment.shape import Shape
 from plots.plot import plot
 
 
-def create_pdm(paths):
+def create_pdm(shapes):
     '''
     Create a new point distribution model based on landmark data.
 
@@ -34,11 +34,6 @@ def create_pdm(paths):
     In: list of directories of the landmark data
     Out: DeformableModel instance created with preprocessed data.
     '''
-    # find all shapes in target directory
-    shapes = []
-    for path in paths:
-        shapes += [load(path + s) for s in os.listdir(path) if s.endswith('.txt')]
-
     # perform gpa
     mean, aligned = gpa(np.asarray(shapes))
     plot('gpa', mean, aligned)
@@ -52,16 +47,6 @@ def create_pdm(paths):
     plot('deformablemodel', model)
 
     return model, shapes
-
-
-def load(path):
-    '''
-    load and parse the data, and return arrays of x and y coordinates
-    '''
-    data = np.loadtxt(path)
-    x = data[::2, ]
-    y = data[1::2, ]
-    return np.hstack((x, y))
 
 
 class PointDistributionModel(object):

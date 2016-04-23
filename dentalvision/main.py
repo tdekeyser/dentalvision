@@ -13,7 +13,12 @@ def run():
         '../Project Data/_Data/Landmarks/original/',
         '../Project Data/_Data/Landmarks/mirrored/'
         ]
-    pdmodel, landmarks = create_pdm(paths)
+    # find all shapes in target directory
+    shapes = []
+    for path in paths:
+        shapes += [load(path + s) for s in os.listdir(path) if s.endswith('.txt')]
+        
+    pdmodel, landmarks = create_pdm(shapes)
 
     # ############TESTS
     target_landmark = landmarks[0]
@@ -41,6 +46,17 @@ def run():
 
     plt.legend(loc='upper right')
     plt.show()
+
+
+def load(path):
+    '''
+    load and parse the data, and return arrays of x and y coordinates
+    '''
+    data = np.loadtxt(path)
+    x = data[::2, ]
+    y = data[1::2, ]
+    return np.hstack((x, y))
+
 
 
 if __name__ == '__main__':
