@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-PLOT_STAGES = False
+PLOT_STAGES = True
 
 
 def plot(choice, *args):
@@ -31,12 +31,12 @@ def plot_gpa(mean, aligned_shapes):
     '''
     # plot mean
     mx, my = np.split(mean, 2)
-    plt.plot(mx, my, marker='o')
+    plt.plot(mx, my, color='r', marker='o')
     # plot first i aligned deviations
-    for i in range(3):
+    for i in range(len(aligned_shapes)):
         a = aligned_shapes[i, :]
         ax, ay = np.split(a, 2)
-        plt.plot(ax, ay, marker='o')
+        plt.scatter(ax, ay)
     axes = plt.gca()
     axes.set_xlim([-1, 1])
     plt.show()
@@ -64,17 +64,15 @@ def plot_deformablemodel(model):
     z = np.zeros(52)
 
     # recreate the mean
-    x = model.deform(z)
-    mx, my = np.split(x, 2)
-    plt.plot(mx, my)
+    mode = model.deform(z)
+    plt.plot(mode.x, mode.y)
 
     # create variations
-    for i in range(2):
-        limit = 3*math.sqrt(model.eigenvalues[i])
-        z[i] = -1*limit
-        y = model.deform(z)
-        nx, ny = np.split(y, 2)
-        plt.plot(nx, ny, marker='o')
+    for i in range(3):
+        limit = 10*math.sqrt(model.eigenvalues[i])
+        z[i] = limit
+        var = model.deform(z)
+        plt.plot(var.x, var.y, marker='o')
 
     axes = plt.gca()
     axes.set_xlim([-1, 1])

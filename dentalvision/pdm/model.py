@@ -13,8 +13,10 @@ parameters.
 '''
 import os
 import numpy as np
-from gpa import gpa
-from pca import pca
+
+from pdm.gpa import gpa
+from pdm.pca import pca
+from alignment.shape import Shape
 from plots.plot import plot
 
 
@@ -42,7 +44,7 @@ def create_pdm(paths):
     plot('gpa', mean, aligned)
 
     # perform PCA
-    eigenvalues, eigenvectors, mean = pca(aligned, mean=mean, max_variance=0.98)
+    eigenvalues, eigenvectors, m = pca(aligned, mean=mean, max_variance=0.98)
     plot('eigenvectors', mean, eigenvectors)
 
     # create PointDistributionModel instance
@@ -73,8 +75,10 @@ class PointDistributionModel(object):
         self.dimension = eigenvalues.size
         self.eigenvalues = eigenvalues
         self.eigenvectors = eigenvectors
-        self.mean = mean
-        self.length = mean.size
+        self.mean = Shape(mean)
+        # create a set of scaled eigenvectors
+        self.variance = self.eigenvalues/np.sum(self.eigenvalues)
+        self.scaled_eigenvectors = np.dot(self.eigenvectors, np.diag(self.variance))
 
     def deform(self, shape_param):
         '''
@@ -84,4 +88,4 @@ class PointDistributionModel(object):
         in: Tx1 vector deformable model b
         out: 1xC deformed image
         '''
-        return self.mean + self.eigenvectors.dot(shape_param).T
+        return Shape(self.mean.vector + self.scaled_eigenvectors.dot(shape_param))

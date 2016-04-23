@@ -86,7 +86,7 @@ class CoreFinder(object):
 
     def find_rotation_angle(self, a, b):
         '''Return angle'''
-        return math.degrees(math.atan(b/a))
+        return math.atan(b/a)
 
     def find_translation(self, subject, target):
         '''

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from pdm.model import create_pdm
 from asm.model import ActiveShapeModel
-from asm.match import Aligner, match
+from asm.fit import Aligner, fit
 from alignment.shape import Shape
 
 
@@ -13,32 +13,33 @@ def run():
         '../Project Data/_Data/Landmarks/original/',
         '../Project Data/_Data/Landmarks/mirrored/'
         ]
-    model, landmarks = create_pdm(paths)
+    pdmodel, landmarks = create_pdm(paths)
 
     # ############TESTS
+    target_landmark = landmarks[0]
+    mean = pdmodel.mean
+    target = Shape(target_landmark)
 
-    mean = Shape(model.mean)
-    targ = Shape(landmarks[0])
+    # test fit function
+    Tx, Ty, s, theta, c = fit(pdmodel, target_landmark)
 
-    aligner = Aligner()
-    Tx, Ty, s, theta = aligner.get_pose_parameters(mean, targ)
-    print Tx, Ty, s, theta
-
-    targy = aligner.invert_transform(targ, Tx, Ty, s, theta)
-    print targy.matrix
+    asm = ActiveShapeModel(pdmodel)
+    targy = asm.transform(Tx, Ty, 1, theta, c)
+    aligned_mean = asm.transform(Tx, Ty, s, theta, np.zeros(pdmodel.dimension))
     print targy.centroid()
 
-    # Tx, Ty, s, theta, b = match(model, landmarks[0])
-    # print b
+    aligner = Aligner()
+    variation = pdmodel.deform(c)
 
-    # asm = ActiveShapeModel(model)
-    # targy = asm.transform(Tx, Ty, s, theta, b)
-    # mean = asm.transform(Tx, Ty, s, theta, np.zeros(model.dimension))
+    plt.plot(target.x, target.y, color='k', marker='o', label='target')
+    plt.plot(targy.x, targy.y, color='r', marker='o', label='result')
 
-    plt.plot(mean.x, mean.y, color='g', marker='o')
-    plt.plot(targy.x, targy.y, color='r', marker='o')
-    # plt.plot(targ.x, targ.y, color='g', marker='o')
-    # plt.plot(transformed.x, transformed.y, color='b', marker='o')
+    plt.scatter(aligned_mean.x, aligned_mean.y, color='y', marker='o', label='aligned_mean')
+
+    # plt.plot(mean.x, mean.y, color='g', marker='o', label='mean')
+    # plt.plot(variation.x, variation.y, color='r', marker='o', label='model variation')
+
+    plt.legend(loc='upper right')
     plt.show()
 
 

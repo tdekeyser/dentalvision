@@ -6,7 +6,7 @@ parameter space (Cootes 2000, 12).
 See algorithm in Cootes (2000), p. 12-13.
 '''
 import numpy as np
-from match import match
+from asm.fit import fit
 from alignment.shape import Shape
 from alignment.align import CoreAlign
 
@@ -34,15 +34,16 @@ class ActiveShapeModel(object):
         Transform the model to the image by inserting the most suitable
         pose and shape parameters
         '''
-        mode = Shape(self.pdmodel.deform(b))
+        mode = self.pdmodel.deform(b)
         return self.aligner.transform(mode, Tx, Ty, s, theta)
 
-    def __check_constraints(self, vector):
+    def constrain(self, vector):
         '''
         All elements of the vector should agree to the following constraint:
             |v_i| < 3*sqrt(eigenval_i)
         '''
-        limit = 3*np.sqrt(self.eigenvalues)
-        vector[vector > limit] = limit
-        vector[vector < -1*limit] = -1*limit
+        uplimit = 3*np.sqrt(self.pdmodel.eigenvalues)
+        lowlimit = -1*uplimit
+        vector[vector > uplimit] = uplimit[np.where(vector > uplimit)]
+        vector[vector < lowlimit] = lowlimit[np.where(vector < lowlimit)]
         return vector
