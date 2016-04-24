@@ -7,9 +7,34 @@ used.
 '''
 import numpy as np
 
+from glm.profile import extract_profile
 
-def create_greylevelmodel(paths, landmarks, k=3):
-    pass
+
+def create_glm(images, shapes, k=5):
+    '''
+    Create a gray level model
+    '''
+    for i in range(len(images)):
+        image = images[i].T
+        print image.shape
+        imageshapes = shapes[i]
+        for shape in imageshapes:
+            shape = np.vstack(np.split(shape, 2))
+            print shape
+            for j in range(shape.shape[1]-1):
+                print (shape[:,j], shape[:,j+1])
+                # make grayscale profile for each landmark couple
+                profile = extract_profile(image, (shape[:,j], shape[:,j+1]), k=k)
+                if j == shape.shape[1]-2:
+                    # also create a profile of the final landmark
+                    profile = extract_profile(image, (shape[:,j+1], shape[:,j]), k=k)
+                # normalize profile
+                profile = normalize(profile)
+                print profile
+
+
+def normalize(vector):
+    return vector/np.sum(vector)
 
 
 class GreyLevelModel(object):

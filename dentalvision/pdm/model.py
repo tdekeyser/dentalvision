@@ -46,7 +46,7 @@ def create_pdm(shapes):
     model = PointDistributionModel(eigenvalues, eigenvectors, mean)
     plot('deformablemodel', model)
 
-    return model, shapes
+    return model
 
 
 class PointDistributionModel(object):

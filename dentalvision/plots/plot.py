@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-PLOT_STAGES = True
+PLOT_STAGES = False
 
 
 def plot(choice, *args):
