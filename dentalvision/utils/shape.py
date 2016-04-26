@@ -30,11 +30,15 @@ class Shape(object):
             self.x, self.y = np.split(np.hstack(array), 2)
         except AttributeError:
             self.x, self.y = array
+        self.length = self.x.size
         self.reset_matrix()
 
     def reset_matrix(self):
         self.vector = np.hstack((self.x, self.y))
         self.matrix = np.vstack((self.x, self.y))
+
+    def get(self, index):
+        return (self.x[index], self.y[index])
 
     def centroid(self):
         '''Compute the centroid: the average of an array of coordinates'''

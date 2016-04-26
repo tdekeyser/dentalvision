@@ -7,8 +7,8 @@ for a summary of (generalised) procrustes analysis.
 @author: Tina Smets, Tom De Keyser
 '''
 import numpy as np
-from alignment.shape import Shape
-from alignment.align import CoreAlign
+from utils.shape import Shape
+from utils.align import CoreAlign
 
 
 def gpa(shapes):

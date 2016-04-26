@@ -11,12 +11,11 @@ Used in the Active Shape Model environment. The Active Shape Model
 is then the fit function that iteratively searches for the best
 parameters.
 '''
-import os
 import numpy as np
 
-from pdm.gpa import gpa
-from pdm.pca import pca
-from alignment.shape import Shape
+from utils.gpa import gpa
+from utils.pca import pca
+from utils.shape import Shape
 from plots.plot import plot
 
 

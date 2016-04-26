@@ -7,8 +7,8 @@ See algorithm in Cootes (2000), p. 12-13.
 '''
 import numpy as np
 from asm.fit import fit
-from alignment.shape import Shape
-from alignment.align import CoreAlign
+from utils.shape import Shape
+from utils.align import CoreAlign
 
 
 class ActiveShapeModel(object):
@@ -18,12 +18,16 @@ class ActiveShapeModel(object):
     deformable model that fits the examined region (keeping the shape
     parameter within a 3*sqrt(eigval) bound).
     Repeat until convergence.
+
+    in: PointDistributionModel pdmodel
+        GreyLevelModel glmodel
     '''
-    def __init__(self, pdmodel):
+    def __init__(self, pdmodel, glmodel):
         self.pdmodel = pdmodel
+        self.glmodel = glmodel
         self.aligner = CoreAlign()
 
-    def fit(self, region):
+    def iterate(self, region):
         '''
         Perform the Active Shape Model algorithm
         '''

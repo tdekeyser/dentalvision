@@ -4,8 +4,8 @@ Algorithm for matching the model to image points.
 Based on (Cootes et al. 2000, p.9) and (Blanz et al., p.4).
 '''
 import numpy as np
-from alignment.shape import Shape
-from alignment.align import CoreAlign, CoreFinder
+from utils.shape import Shape
+from utils.align import CoreAlign, CoreFinder
 
 
 def fit(pdmodel, image_points, n=None):
@@ -57,8 +57,6 @@ class Aligner(CoreAlign, CoreFinder):
         '''
         # find/perform transformations
         Tx, Ty = self.find_translation(subject, target)
-        # first translate before scaling and rotating
-        # translated = self.translate(subject, Tx, Ty)
         # compute a and b
         a, b = self.get_transformation_parameters(subject, target)
         s = self.find_scale(a, b)

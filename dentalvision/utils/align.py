@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from alignment.shape import Shape
+from utils.shape import Shape
 
 
 class CoreAlign(object):
