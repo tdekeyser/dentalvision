@@ -14,19 +14,14 @@ def extract_profile(image, couple, k=3):
         tuple of 2 tuples coordinates (points)
     out: grey-level profile of the first point
     '''
-    print image.shape
     point1, point2 = couple
     x, y = point1
     # create frame with radius k
     frame = image[x-k:x+k, y-k:y+k]
-    print frame.shape
     # create normal to landmarks
     profilemaker = Profile(point1, point2)
-    # get 2k points closest to frame
+    # get 2k+1 points closest to frame
     profile = profilemaker.get_profile(frame, k)
-    # insert the point itself in the middle
-    profile.insert(k-1, image[x, y])
-
     return np.array(profile)
 
 
@@ -38,23 +33,26 @@ class Profile(object):
     def __init__(self, a, b):
         self.normal(a, b)
 
-    def get_profile(self, frame, k, coordinates=False):
+    def get_profile(self, frame, k):
         '''
         Compute the distance to normal for each pixel in frame. Return the
-        greyscale intensity of the 2k nearest pixels to normal.
+        greyscale intensity of the 2k+1 nearest pixels to normal.
 
         out: list of tuples (coordinates, grey-levels)
+        '''
+        return [frame[r, c] for r, c in self.get_closest(frame, k)]
+
+    def get_closest(self, frame, k):
+        '''
+        Returns 2k+1 closest points along the normal and within frame
         '''
         rows, columns = frame.shape
         distances = []
         for r in range(rows):
             for c in range(columns):
-                if coordinates:
-                    framedist = (self.distance((r, c)), (r, c))
-                else:
-                    framedist = (self.distance((r, c)), frame[r, c])
+                framedist = (self.distance((r, c)), (r, c))
                 distances.append(framedist)
-        return [float(g[1]) for g in sorted(distances, reverse=True)[:2*k]]
+        return [float(g[1]) for g in sorted(distances, reverse=True)[:2*k+1]]
 
     def normal(self, a, b):
         '''

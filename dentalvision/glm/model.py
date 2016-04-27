@@ -113,7 +113,10 @@ class GreyLevelModel(object):
         self.eigenvectors.append(eigenvectors)
         self.mean.append(mean)
 
-    def evaluate(self, index, profile):
+    def set_evaluation_index(self, m):
+        self.M_index = m
+
+    def evaluate(self, profile):
         '''
         Use the Mahalanobis distance to evaluate the quality of
         an input profile.
@@ -128,7 +131,7 @@ class GreyLevelModel(object):
             vector of grey-level profile
         out: Mahalanobis distance measure
         '''
-        eigenvalues, eigenvectors, mean = self.get(index)
+        eigenvalues, eigenvectors, mean = self.get(self.M_index)
         M = 0
         for j in range(profile.size):
             # project profile onto profile.size eigenvectors

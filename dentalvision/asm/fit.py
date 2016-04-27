@@ -8,38 +8,42 @@ from utils.shape import Shape
 from utils.align import CoreAlign, CoreFinder
 
 
-def fit(pdmodel, image_points, n=None):
-    '''
-    Algorithm that finds the best shape parameters that match identified
-    image points.
+class Fitter(object):
+    def __init__(self, pdmodel):
+        self.pdmodel = pdmodel
+        self.aligner = Aligner()
 
-    In: PointDistributionModel instance pdm,
-        array of new image points (x1, x2, ..., xN, y1, y2,..., yN)
-    Out: the pose params (Tx, Ty, s, theta) and shape parameter (c) to
-        fit the model to the image
-    '''
-    # initialise pose parameter finder and aligner
-    aligner = Aligner()
-    image = Shape(image_points)
-    mean = pdmodel.mean
-    # find pose parameters to align with new image points
-    Tx, Ty, s, theta = aligner.get_pose_parameters(mean, image)
-    # align image with model
-    y = aligner.invert_transform(image, Tx, Ty, 1, theta)
+    def fit(self, image_points, n=None):
+        '''
+        Algorithm that finds the best shape parameters that match identified
+        image points.
 
-    # SVD on scaled eigenvectors of the model
-    u, w, v = np.linalg.svd(pdmodel.scaled_eigenvectors, full_matrices=False)
-    W = np.zeros((u.shape[1], v.shape[0]))
+        In: PointDistributionModel instance pdm,
+            array of new image points (x1, x2, ..., xN, y1, y2,..., yN)
+        Out: the pose params (Tx, Ty, s, theta) and shape parameter (c) to
+            fit the model to the image
+        '''
+        # initialise pose parameter finder and aligner
+        image = Shape(image_points)
+        mean = self.pdmodel.mean
+        # find pose parameters to align with new image points
+        Tx, Ty, s, theta = self.aligner.get_pose_parameters(mean, image)
+        # align image with model
+        y = self.aligner.invert_transform(image, Tx, Ty, 1, theta)
 
-    # define weight vector n
-    if not n:
-        last_eigenvalue = pdmodel.eigenvalues[-1]
-        n = last_eigenvalue**2 if last_eigenvalue**2 >= 0 else 0
-    # calculate the shape vector
-    W[:w.size, :w.size] = np.diag(w/(w**2) + n)
-    c = (v.T).dot(W.T).dot(u.T).dot(y.vector)
+        # SVD on scaled eigenvectors of the model
+        u, w, v = np.linalg.svd(self.pdmodel.scaled_eigenvectors, full_matrices=False)
+        W = np.zeros((u.shape[1], v.shape[0]))
 
-    return (Tx, Ty, s, theta, c)
+        # define weight vector n
+        if not n:
+            last_eigenvalue = self.pdmodel.eigenvalues[-1]
+            n = last_eigenvalue**2 if last_eigenvalue**2 >= 0 else 0
+        # calculate the shape vector
+        W[:w.size, :w.size] = np.diag(w/(w**2) + n)
+        c = (v.T).dot(W.T).dot(u.T).dot(y.vector)
+
+        return (Tx, Ty, s, theta, c)
 
 
 class Aligner(CoreAlign, CoreFinder):

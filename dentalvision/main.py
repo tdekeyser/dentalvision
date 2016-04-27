@@ -43,6 +43,13 @@ def run():
     # 2. GRAYSCALE MODEL
     glmodel = grayscalemodel()
 
+    # 3. ACTIVE SHAPE MODEL
+    activeshape = ActiveShapeModel(pdmodel, glmodel)
+
+        # create some starting array
+    # init = np.array(...)
+    # asm.iterate(init, t=10)
+
     # target_landmark = landmarks[0]
     # mean = pdmodel.mean
     # target = Shape(target_landmark)
@@ -50,7 +57,7 @@ def run():
     # # test fit function
     # Tx, Ty, s, theta, c = fit(pdmodel, target_landmark)
 
-    # asm = ActiveShapeModel(pdmodel)
+    # asm = ActiveShapeModel(pdmodel, glmodel)
     # targy = asm.transform(Tx, Ty, 1, theta, c)
     # aligned_mean = asm.transform(Tx, Ty, s, theta, np.zeros(pdmodel.dimension))
     # print targy.centroid()
