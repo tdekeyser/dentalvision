@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from pdm.model import create_pdm
 from glm.model import create_glm
 from asm.model import ActiveShapeModel
-from asm.fit import Aligner, fit
+from asm.fit import Aligner, Fitter
 from utils.shape import Shape
 
 
@@ -36,19 +36,52 @@ def grayscalemodel():
     return create_glm(np.asarray(images), np.asarray(shapes), k=7)
 
 
+def init_shape():
+    center = (928, 727)
+    return square(center)
+
+
+def square(center):
+    cx, cy = center
+    left = np.asarray([(cx-5, cy-5+i) for i in range(10)])
+    right = np.asarray([(cx+5, cy-5+i) for i in range(10)])
+    up = np.asarray([(cx-5+i, cy+5) for i in range(10)])
+    down = np.asarray([(cx-5+i, cy-5) for i in range(10)])
+
+    one = np.hstack((left, up))
+    two = np.hstack((right, down))
+
+    stack = np.hstack((np.hstack(one), np.hstack(two)))
+    x = stack[::2, ]
+    y = stack[1::2, ]
+    return np.hstack((x, y))
+
+
 def run():
     # 1. POINT DISTRIBUTION MODEL
     pdmodel, landmarks = pointdistributionmodel()
+    print '***Point-distribution model created.***'
 
     # 2. GRAYSCALE MODEL
     glmodel = grayscalemodel()
+    print '***Grey-level model created.***'
 
     # 3. ACTIVE SHAPE MODEL
     activeshape = ActiveShapeModel(pdmodel, glmodel)
+    print '***Active Shape Model initiated.***'
 
-        # create some starting array
-    # init = np.array(...)
-    # asm.iterate(init, t=10)
+    # create some starting array
+    init = init_shape()
+    # get greyscale image
+    image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/01.tif'), cv2.COLOR_BGR2GRAY)
+    init = landmarks[0]
+    new_fit = activeshape.iterate(image, init, t=10)
+    print new_fit
+
+    init = Shape(init)
+    plt.plot(init.x, init.y, marker='o', color='r')
+    plt.plot(new_fit.x, new_fit.y, marker='o', color='g')
+    plt.show()
 
     # target_landmark = landmarks[0]
     # mean = pdmodel.mean

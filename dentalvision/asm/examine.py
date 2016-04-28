@@ -39,7 +39,7 @@ class Examiner(object):
             point = model_points.get(m)
             next_point = model_points.get(m-1)
             self.glmodel.set_evaluation_index(m)
-            new_points[:, m] = self.get_best_match(m, point, next_point, t=t)
+            new_points[:, m] = self.get_best_match(point, next_point, t=t)
 
         return np.hstack(new_points)
 
@@ -69,8 +69,8 @@ class Examiner(object):
 
         # determine grey-level profiles of all found points
         for i in range(len(profile_coordinates)):
-            coord = profile_coordinates[i]
-            next_coord = profile_coordinates[i-1]
+            coord = (point[0] - profile_coordinates[i][0], point[1] - profile_coordinates[i][1])
+            next_coord = (point[0] - profile_coordinates[i-1][0], point[1] - profile_coordinates[i-1][1])
             profile = extract_profile(self.image, (coord, next_coord), k=t)
             # evaluate the profile
             M = self.glmodel.evaluate(profile)

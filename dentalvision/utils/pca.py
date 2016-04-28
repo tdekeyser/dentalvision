@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 
-def pca(samples, mean=None, max_variance=1):
+def pca(samples, mean=None, max_variance=1, full_matrices=False):
     '''
     Perform PCA analysis on samples according to an amount of principal
     components.
@@ -31,12 +31,13 @@ def pca(samples, mean=None, max_variance=1):
                                             full_matrices=False
                                             )
 
-    # only keep eigenvalues that add up to max_variance * total variance
-    total_variance = np.sum(eigenvalues)
-    for i in range(eigenvalues.size):
-        if np.sum(eigenvalues[:i]) >= max_variance*total_variance:
-            eigenvalues = eigenvalues[:i]
-            eigenvectors = eigenvectors[:, :i]
+    if not full_matrices:
+        # only keep eigenvalues that add up to max_variance * total variance
+        total_variance = np.sum(eigenvalues)
+        for i in range(eigenvalues.size):
+            if np.sum(eigenvalues[:i]) >= max_variance*total_variance:
+                eigenvalues = eigenvalues[:i]
+                eigenvectors = eigenvectors[:, :i]
 
     return eigenvalues, normalize_vectors(eigenvectors), mean
 

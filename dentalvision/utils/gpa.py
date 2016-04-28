@@ -7,7 +7,7 @@ for a summary of (generalised) procrustes analysis.
 @author: Tina Smets, Tom De Keyser
 '''
 import numpy as np
-from utils.shape import Shape
+from utils.structure import Shape
 from utils.align import CoreAlign
 
 

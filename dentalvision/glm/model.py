@@ -32,7 +32,7 @@ def create_glm(images, shapes, k=3):
         profiles = landmark_profiles[l]
         mean = profiles.mean(0)
         # keep all dimensions
-        eigenvalues, eigenvectors, m = pca(profiles, mean=mean)
+        eigenvalues, eigenvectors, m = pca(profiles, mean=mean, full_matrices=True)
         # build the model using eigen*s and a mean per landmark
         glmodel.build(eigenvalues, eigenvectors, mean)
 
@@ -87,7 +87,8 @@ def normalize(vector):
     '''
     Normalize a vector such that its sum is equal to 1.
     '''
-    return vector/np.sum(np.absolute(vector))
+    div = np.sum(np.absolute(vector)) if bool(np.sum(np.absolute(vector))) else 1
+    return vector/div
 
 
 class GreyLevelModel(object):
@@ -131,6 +132,10 @@ class GreyLevelModel(object):
             vector of grey-level profile
         out: Mahalanobis distance measure
         '''
+        # THE FOLLOWING LINE IS WRONG! Do good search instead of this...
+        profile = profile[:14]
+        ######################
+
         eigenvalues, eigenvectors, mean = self.get(self.M_index)
         M = 0
         for j in range(profile.size):
@@ -139,16 +144,19 @@ class GreyLevelModel(object):
             M += project/eigenvalues[j]
         return M
 
-    # def project(self, profile, eigenvector, mean):
-    #     '''
-    #     Project profile onto one of the eigenvectors.
-    #     See Cootes (1993) p.641:
-    #         b_g = eigenvectors.T * (g - mean)
+    def project(self, profile, eigenvector, mean):
+        '''
+        Project profile onto one of the eigenvectors.
+        See Cootes (1993) p.641:
+            b_g = eigenvectors.T * (g - mean)
 
-    #     out: vector of profile parameters
-    #         eigenvalues that go with the profile
-    #     '''
-    #     return np.dot(eigenvector.T, (profile - mean).T)
+        out: vector of profile parameters
+            eigenvalues that go with the profile
+        '''
+        # print 'profile', profile.shape
+        # print 'mean', mean.shape
+        # print 'eigenvecs', eigenvector.shape
+        return np.dot(eigenvector.T, (profile - mean).T)
 
     # def deform(self, index, profile_param):
     #     '''

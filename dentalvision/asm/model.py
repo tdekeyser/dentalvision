@@ -8,7 +8,7 @@ See algorithm in Cootes (2000), p. 12-13.
 import numpy as np
 from asm.fit import Fitter, Aligner
 from asm.examine import Examiner
-from utils.shape import Shape
+from utils.structure import Shape
 
 
 class ActiveShapeModel(object):
@@ -30,7 +30,7 @@ class ActiveShapeModel(object):
         self.examiner = Examiner(glmodel)
         self.aligner = Aligner()
 
-    def iterate(self, region, t=10):
+    def iterate(self, image, region, t=10):
         '''
         Perform the Active Shape Model algorithm.
 
@@ -41,17 +41,18 @@ class ActiveShapeModel(object):
         '''
         # initialise the mean at the center of the region
         region = Shape(region)
+        self.examiner.set_image(image)
         # get pose parameters to init in region
         Tx, Ty, s, theta = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
         # init model mean inside region
         shape_points = self.aligner.transform(self.pdmodel.mean, Tx, Ty, s, theta)
 
         # examine t pixels on the normals of all points in the model (t > k)
-        examinated_shape = self.examiner.examine(shape_points, t=t)
+        examinated_shape = self.examiner.examine(shape_points.vector, t=t)
         # find the best parameters to fit the model to the examined points
         Tx, Ty, s, theta, c = self.fitter.fit(examinated_shape)
         # transform the model according to the parameters
-        fitted_shape = self.transform(Tx, Ty, s, theta, c)
+        fitted_shape = self.transform(Tx, Ty, 1, theta, c)
 
         return fitted_shape
 

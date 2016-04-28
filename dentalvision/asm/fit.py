@@ -4,7 +4,7 @@ Algorithm for matching the model to image points.
 Based on (Cootes et al. 2000, p.9) and (Blanz et al., p.4).
 '''
 import numpy as np
-from utils.shape import Shape
+from utils.structure import Shape
 from utils.align import CoreAlign, CoreFinder
 
 

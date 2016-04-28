@@ -15,7 +15,7 @@ import numpy as np
 
 from utils.gpa import gpa
 from utils.pca import pca
-from utils.shape import Shape
+from utils.structure import Shape
 from plots.plot import plot
 
 

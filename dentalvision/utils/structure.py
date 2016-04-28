@@ -43,3 +43,16 @@ class Shape(object):
     def centroid(self):
         '''Compute the centroid: the average of an array of coordinates'''
         return (np.sum(self.x)/self.x.shape, np.sum(self.y)/self.y.shape)
+
+
+class Point(object):
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __add__(self, other):
+        return (self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return (self.x - other.x, self.y - other.y)

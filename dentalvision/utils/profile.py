@@ -40,7 +40,7 @@ class Profile(object):
 
         out: list of tuples (coordinates, grey-levels)
         '''
-        return [frame[r, c] for r, c in self.get_closest(frame, k)]
+        return np.asarray([float(frame[r, c]) for r, c in self.get_closest(frame, k)])
 
     def get_closest(self, frame, k):
         '''
@@ -52,7 +52,7 @@ class Profile(object):
             for c in range(columns):
                 framedist = (self.distance((r, c)), (r, c))
                 distances.append(framedist)
-        return [float(g[1]) for g in sorted(distances, reverse=True)[:2*k+1]]
+        return [g[1] for g in sorted(distances, reverse=True)[:2*k+1]]
 
     def normal(self, a, b):
         '''
