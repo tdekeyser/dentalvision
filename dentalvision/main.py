@@ -24,7 +24,7 @@ def pointdistributionmodel():
     return create_pdm(shapes), np.asarray(shapes)
 
 
-def grayscalemodel():
+def grayscalemodel(k=7):
     imdir = '../Project Data/_Data/Radiographs/'
     shapedir = '../Project Data/_Data/Landmarks/original/'
 
@@ -33,7 +33,7 @@ def grayscalemodel():
     for i in range(len(images)):
         shapes.append([load(shapedir + s) for s in os.listdir(shapedir) if 'landmarks'+str(i+1)+'-' in s])
 
-    return create_glm(np.asarray(images), np.asarray(shapes), k=7)
+    return create_glm(np.asarray(images), np.asarray(shapes), k=k)
 
 
 def init_shape():
@@ -63,7 +63,7 @@ def run():
     print '***Point-distribution model created.***'
 
     # 2. GRAYSCALE MODEL
-    glmodel = grayscalemodel()
+    glmodel = grayscalemodel(k=7)
     print '***Grey-level model created.***'
 
     # 3. ACTIVE SHAPE MODEL
@@ -76,7 +76,6 @@ def run():
     image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/01.tif'), cv2.COLOR_BGR2GRAY)
     init = landmarks[0]
     new_fit = activeshape.iterate(image, init, t=10)
-    print new_fit
 
     init = Shape(init)
     plt.plot(init.x, init.y, marker='o', color='r')

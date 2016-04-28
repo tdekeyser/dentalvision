@@ -43,7 +43,7 @@ class Fitter(object):
         W[:w.size, :w.size] = np.diag(w/(w**2) + n)
         c = (v.T).dot(W.T).dot(u.T).dot(y.vector)
 
-        return (Tx, Ty, s, theta, c)
+        return Tx, Ty, s, theta, c
 
 
 class Aligner(CoreAlign, CoreFinder):

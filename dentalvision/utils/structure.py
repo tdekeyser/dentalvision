@@ -33,6 +33,9 @@ class Shape(object):
         self.length = self.x.size
         self.reset_matrix()
 
+    def __eq__(self, other):
+        return np.allclose(self.x, other.x) and np.allclose(self.y, other.y)
+
     def reset_matrix(self):
         self.vector = np.hstack((self.x, self.y))
         self.matrix = np.vstack((self.x, self.y))

@@ -23,12 +23,13 @@ def create_glm(images, shapes, k=3):
     '''
     # get gray-level profiles for each landmark
     landmark_profiles = get_image_profiles(images, shapes, k=k)
+    landmark_amount = landmark_profiles.shape[0]
 
     # initialise the model with the amount of landmarks
-    glmodel = GreyLevelModel(landmark_profiles.shape[0])
+    glmodel = GreyLevelModel(landmark_amount)
 
     # perform PCA for each landmark
-    for l in range(landmark_profiles.shape[0]):
+    for l in range(landmark_amount):
         profiles = landmark_profiles[l]
         mean = profiles.mean(0)
         # keep all dimensions
@@ -153,9 +154,6 @@ class GreyLevelModel(object):
         out: vector of profile parameters
             eigenvalues that go with the profile
         '''
-        # print 'profile', profile.shape
-        # print 'mean', mean.shape
-        # print 'eigenvecs', eigenvector.shape
         return np.dot(eigenvector.T, (profile - mean).T)
 
     # def deform(self, index, profile_param):

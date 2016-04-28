@@ -10,6 +10,8 @@ from asm.fit import Fitter, Aligner
 from asm.examine import Examiner
 from utils.structure import Shape
 
+import matplotlib.pyplot as plt
+
 
 class ActiveShapeModel(object):
     '''
@@ -44,17 +46,29 @@ class ActiveShapeModel(object):
         self.examiner.set_image(image)
         # get pose parameters to init in region
         Tx, Ty, s, theta = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
-        # init model mean inside region
-        shape_points = self.aligner.transform(self.pdmodel.mean, Tx, Ty, s, theta)
+        # align model mean with region
+        shape_points = self.aligner.transform(self.pdmodel.mean, Tx, Ty, s/3, theta)
+        fitted_shape = Shape(np.zeros_like(region.vector))
 
-        # examine t pixels on the normals of all points in the model (t > k)
-        examinated_shape = self.examiner.examine(shape_points.vector, t=t)
-        # find the best parameters to fit the model to the examined points
-        Tx, Ty, s, theta, c = self.fitter.fit(examinated_shape)
-        # transform the model according to the parameters
-        fitted_shape = self.transform(Tx, Ty, 1, theta, c)
+        i = 0
+        while shape_points != fitted_shape:
+            fitted_shape = shape_points
+            # examine t pixels on the normals of all points in the model (t > k)
+            examinated_shape = self.examiner.examine(shape_points.vector, t=t)
+            # find the best parameters to fit the model to the examined points
+            Tx, Ty, s, theta, c = self.fitter.fit(examinated_shape)
+            # transform the model according to the parameters
+            shape_points = self.transform(Tx, Ty, 1, theta, c)
+            plt.plot(region.x, region.y)
+            plt.plot(shape_points.x, shape_points.y, marker='o')
+            plt.show()
 
-        return fitted_shape
+            print shape_points.vector
+            i += 1
+            if i == 10:
+                break
+
+        return shape_points
 
     def transform(self, Tx, Ty, s, theta, b):
         '''
