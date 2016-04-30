@@ -7,7 +7,7 @@ used. The Mahalanobis distance is used as an evaluation measure.
 '''
 import numpy as np
 
-from utils.profile import Profile
+from glm.profile import Profile
 
 
 def create_glm(images, shapes, k=0):

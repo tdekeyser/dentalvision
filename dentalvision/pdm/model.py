@@ -13,10 +13,10 @@ parameters.
 '''
 import numpy as np
 
-from utils.gpa import gpa
-from utils.pca import pca
+from pdm.gpa import gpa
+from pdm.pca import pca
 from utils.structure import Shape
-from plots.plot import plot
+from utils.plot import plot
 
 
 def create_pdm(shapes):

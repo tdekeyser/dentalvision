@@ -1,7 +1,7 @@
 import numpy as np
 
 from utils.structure import Shape
-from utils.profile import Profile
+from glm.profile import Profile
 
 import matplotlib.pyplot as plt
 
