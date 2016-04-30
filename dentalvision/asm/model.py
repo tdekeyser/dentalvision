@@ -32,7 +32,7 @@ class ActiveShapeModel(object):
         self.examiner = Examiner(glmodel)
         self.aligner = Aligner()
 
-    def iterate(self, image, region, t=10):
+    def iterate(self, image, region, t=0):
         '''
         Perform the Active Shape Model algorithm.
 
@@ -47,26 +47,30 @@ class ActiveShapeModel(object):
         # get pose parameters to init in region
         Tx, Ty, s, theta = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
         # align model mean with region
-        shape_points = self.aligner.transform(self.pdmodel.mean, Tx, Ty, s/3, theta)
+        shape_points = self.aligner.transform(self.pdmodel.mean, Tx, Ty, s, theta)
         fitted_shape = Shape(np.zeros_like(region.vector))
 
         i = 0
         while shape_points != fitted_shape:
             fitted_shape = shape_points
             # examine t pixels on the normals of all points in the model (t > k)
-            examinated_shape = self.examiner.examine(shape_points.vector, t=t)
+            examinated_shape = self.examiner.examine(shape_points, t=t)
             # find the best parameters to fit the model to the examined points
-            Tx, Ty, s, theta, c = self.fitter.fit(examinated_shape)
+            Tx, Ty, s, theta, c = self.fitter.fit(examinated_shape, n=0)
             # transform the model according to the parameters
-            shape_points = self.transform(Tx, Ty, 1, theta, c)
-            plt.plot(region.x, region.y)
-            plt.plot(shape_points.x, shape_points.y, marker='o')
-            plt.show()
+            shape_points = self.transform(Tx, Ty, s, theta, c)
 
-            print shape_points.vector
+
+        ##### plot intermediate stages for TESTING
+            # plt.plot(region.x, region.y)
+            # plt.plot(shape_points.x, shape_points.y, marker='o')
+            # plt.show()
+
             i += 1
+            print str(i)
             if i == 10:
                 break
+        #####
 
         return shape_points
 
@@ -75,12 +79,15 @@ class ActiveShapeModel(object):
         Transform the model to the image by inserting the most suitable
         pose and shape parameters
         '''
-        mode = self.pdmodel.deform(b)
+        mode = self.pdmodel.deform(self.constrain(b))
         return self.aligner.transform(mode, Tx, Ty, s, theta)
 
     def constrain(self, vector):
         '''
-        All elements of the vector should agree to the following constraint:
+        Define constrains for the shape parameter vector.
+
+        According to Cootes, all elements of the vector should agree
+        to the following constraint:
             |v_i| < 3*sqrt(eigenval_i)
         '''
         uplimit = 3*np.sqrt(self.pdmodel.eigenvalues)

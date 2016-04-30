@@ -6,71 +6,86 @@ import math
 import numpy as np
 
 
-def extract_profile(image, couple, k=3):
-    '''
-    Extracts a grey-level profile for a point.
-
-    in: matrix of pixels image
-        tuple of 2 tuples coordinates (points)
-    out: grey-level profile of the first point
-    '''
-    point1, point2 = couple
-    x, y = point1
-    # create frame with radius k
-    frame = image[x-k:x+k, y-k:y+k]
-    # create normal to landmarks
-    profilemaker = Profile(point1, point2)
-    # get 2k+1 points closest to frame
-    profile = profilemaker.get_profile(frame, k)
-    return np.array(profile)
-
-
 class Profile(object):
     '''
     Class that creates a normal to input points and computes the 2k nearest
     pixels to that normal.
     '''
-    def __init__(self, a, b):
-        self.normal(a, b)
+    def __init__(self, k):
+        self.k = k
 
-    def get_profile(self, frame, k):
+    def sample(self, points):
+        '''
+        Get a sample from self.k points on each side of the normal between
+        the triple in points.
+
+        in: triple previous point, point, and next point
+        out: list of tuples along the normal through point
+        '''
+        prev_point, point, next_point = points
+        # compute the normal
+        self.normal = self._compute_normal(prev_point, next_point)
+        # sample along the normal
+        return self._sample(point)
+
+    def profile(self, image, points):
         '''
         Compute the distance to normal for each pixel in frame. Return the
         greyscale intensity of the 2k+1 nearest pixels to normal.
 
-        out: list of tuples (coordinates, grey-levels)
+        out: list of grey-levels
         '''
-        return np.asarray([float(frame[r, c]) for r, c in self.get_closest(frame, k)])
+        greys = np.asarray([float(image[r, c]) for r, c in self.sample(points)])
+        return self._normalize(self._derive(greys))
 
-    def get_closest(self, frame, k):
+    def _sample(self, starting_point):
         '''
-        Returns 2k+1 closest points along the normal and within frame
+        Returns 2k+1 points along the normal
         '''
-        rows, columns = frame.shape
-        distances = []
-        for r in range(rows):
-            for c in range(columns):
-                framedist = (self.distance((r, c)), (r, c))
-                distances.append(framedist)
-        return [g[1] for g in sorted(distances, reverse=True)[:2*k+1]]
+        positives = []
+        negatives = []
+        start = [(int(starting_point[0]), int(starting_point[1]))]
 
-    def normal(self, a, b):
-        '''
-        Set the slope of a normal through a on ab as a class variable.
+        i = 1
+        while len(positives) < self.k:
+            new = (starting_point[0] - i*self.normal[0], starting_point[1] - i*self.normal[1])
+            if (new not in positives) and (new not in start):
+                positives.append(new)
+            i += 1
 
-        in: 2 tuples of coordinates
-        '''
-        x1, y1 = a
-        x2, y2 = b
-        self.slope = -1*(x2 - x1)/(y2 - y1) if bool(y2-y1) else 0
+        i = 1
+        while len(negatives) < self.k:
+            new = (starting_point[0] + i*self.normal[0], starting_point[1] + i*self.normal[1])
+            if (new not in negatives) and (new not in start):
+                negatives.append(new)
+            i += 1
 
-    def distance(self, point):
-        '''
-        Compute euclidean distance from input point to the normal
-        of the profile using its slope.
+        negatives.reverse()
 
-        in: tuple point
-        out: int distance
+        return negatives + start + positives
+
+    def _compute_normal(self, a, b):
         '''
-        x, y = point
-        return (-1*self.slope*x + y)/math.sqrt(math.pow(self.slope, 2)+1) if bool(self.slope) else x
+        Compute the normal between two points a and b.
+
+        in: tuple coordinates a and b
+        out: 1x2 array normal
+        '''
+        dx = b[0] - a[0]
+        dy = b[1] - a[1]
+        tx, ty = (dx/math.sqrt(dx**2+dy**2), dy/math.sqrt(dx**2+dy**2))
+        return (-1*ty, tx)
+
+    def _derive(self, profile):
+        '''
+        Get derivative profile by computing the discrete difference.
+        See Hamarneh p.13.
+        '''
+        return np.diff(profile)
+
+    def _normalize(self, vector):
+        '''
+        Normalize a vector such that its sum is equal to 1.
+        '''
+        div = np.sum(np.absolute(vector)) if bool(np.sum(np.absolute(vector))) else 1
+        return vector/div

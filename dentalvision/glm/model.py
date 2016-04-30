@@ -7,11 +7,10 @@ used. The Mahalanobis distance is used as an evaluation measure.
 '''
 import numpy as np
 
-from utils.profile import extract_profile
-from utils.pca import pca
+from utils.profile import Profile
 
 
-def create_glm(images, shapes, k=3):
+def create_glm(images, shapes, k=0):
     '''
     Create a gray-level model
 
@@ -21,98 +20,47 @@ def create_glm(images, shapes, k=3):
             of the normal
     out: grayscale level model
     '''
-    # get gray-level profiles for each landmark
-    landmark_profiles = get_image_profiles(images, shapes, k=k)
-    landmark_amount = landmark_profiles.shape[0]
+    glmodel = GrayLevelModel(0, k)
 
-    # initialise the model with the amount of landmarks
-    glmodel = GreyLevelModel(landmark_amount)
+    # get gray-level profiles for each landmark
+    landmark_profiles = glmodel._get_image_profiles(images, shapes)
+    landmark_amount = landmark_profiles.shape[0]
+    glmodel.amount_of_landmarks = landmark_amount
 
     # perform PCA for each landmark
     for l in range(landmark_amount):
         profiles = landmark_profiles[l]
+        # build the model using a covariance matrix and mean per landmark
         mean = profiles.mean(0)
-        # keep all dimensions
-        eigenvalues, eigenvectors, m = pca(profiles, mean=mean, full_matrices=True)
-        # build the model using eigen*s and a mean per landmark
-        glmodel.build(eigenvalues, eigenvectors, mean)
+        covariance = np.dot(profiles.T, profiles)
+        glmodel.build(covariance, mean)
+        print covariance.shape
 
     return glmodel
 
 
-def get_image_profiles(images, shapes, k=5):
-    '''
-    Create matrix of graylevel profiles along the normal of all
-    landmarks and create a matrix of profiles per landmark.
-    profiles = [
-            np.array((#images, 2k)),
-            ... (#landmarks)
-            ]
-
-    in: list of matrices with all images
-        list of all shapes per image
-        amount of pixels k examined on either side
-            of the normal of each landmark
-    out: matrix of profiles per landmark
-    '''
-    # create a zero matrix for all profiles per landmark
-    profiles = []
-    for s in range(shapes.shape[2]/2):
-        profiles.append(np.zeros((images.shape[0], 2*k)))
-
-    # iterate over all images, all shapes, and all landmarks to
-    # extract grey-level profiles
-    for i in range(len(images)):
-        # transpose image to be able to place correct coordinates (x, y)
-        image = images[i].T
-        for j in range(shapes[i].shape[0]):
-            shape = np.vstack(np.split(shapes[i][j], 2))
-            for l in range(shape.shape[1]):
-                # make grayscale profile for each landmark couple
-                profile = extract_profile(image, (shape[:, l], shape[:, l-1]), k=k)
-                # normalize and derive profile
-                profiles[l][i, :] = normalize(derivative(profile))
-
-    return np.asarray(profiles)
-
-
-def derivative(profile):
-    '''
-    Get derivative profile by computing the discrete difference.
-    See Hamarneh p.13.
-    '''
-    return np.diff(profile)
-
-
-def normalize(vector):
-    '''
-    Normalize a vector such that its sum is equal to 1.
-    '''
-    div = np.sum(np.absolute(vector)) if bool(np.sum(np.absolute(vector))) else 1
-    return vector/div
-
-
-class GreyLevelModel(object):
+class GrayLevelModel(object):
     '''
     Build a grey-level model that is able to evaluate the grey-level
     of a new pattern to a mean for that landmark.
     '''
-    def __init__(self, amount_of_landmarks):
+    def __init__(self, amount_of_landmarks, k):
         self.amount_of_landmarks = amount_of_landmarks
-        self.eigenvalues = []
-        self.eigenvectors = []
+        self.covariance = []
         self.mean = []
+        self.k = k
+        self.profiler = Profile(k)
+        self.M_index = 0
 
     def get(self, index):
         '''
         Get eigen*s and mean from landmark index (int)
         '''
-        return self.eigenvalues[index], self.eigenvectors[index], self.mean[index]
+        return self.covariance[index], self.mean[index]
 
-    def build(self, eigenvalues, eigenvectors, mean):
+    def build(self, covariance, mean):
         '''Update the model with new landmark eigen*s and mean'''
-        self.eigenvalues.append(eigenvalues)
-        self.eigenvectors.append(eigenvectors)
+        self.covariance.append(covariance)
         self.mean.append(mean)
 
     def set_evaluation_index(self, m):
@@ -120,49 +68,63 @@ class GreyLevelModel(object):
 
     def evaluate(self, profile):
         '''
-        Use the Mahalanobis distance to evaluate the quality of
-        an input profile.
-        See Behiels et al. (1999):
+        Evaluate the quality of the fit of a new sample according
+        to the Mahalanobis distance:
 
-            M = sum_j..n_p(b_gj/eigenvalue_j)
+            f(g_new) = (g_new - mean).T * cov^-1 * (g_new - mean)
 
-        with b_gj the projection of the input pattern onto the j-th
-        eigenvector.
-
-        in: index of landmark
-            vector of grey-level profile
+        in: vector of grey-level profile
         out: Mahalanobis distance measure
         '''
-        # THE FOLLOWING LINE IS WRONG! Do good search instead of this...
-        profile = profile[:14]
-        ######################
+        cov, mean = self.get(self.M_index)
+        # np.linalg.inv(cov) returns Singular Matrix error --> not invertible...
+        return (profile - mean).T.dot(cov).dot(profile-mean)
 
-        eigenvalues, eigenvectors, mean = self.get(self.M_index)
-        M = 0
-        for j in range(profile.size):
-            # project profile onto profile.size eigenvectors
-            project = self.project(profile, eigenvectors[:, j], mean)**2
-            M += project/eigenvalues[j]
-        return M
-
-    def project(self, profile, eigenvector, mean):
+    def profile(self, image, points):
         '''
-        Project profile onto one of the eigenvectors.
-        See Cootes (1993) p.641:
-            b_g = eigenvectors.T * (g - mean)
-
-        out: vector of profile parameters
-            eigenvalues that go with the profile
+        Creates gray-level profile for given point in the image.
         '''
-        return np.dot(eigenvector.T, (profile - mean).T)
+        return self.profiler.profile(image, points)
 
-    # def deform(self, index, profile_param):
+    def _get_image_profiles(self, images, shapes):
+        '''
+        Create matrix of graylevel profiles along the normal of all
+        landmarks and create a matrix of profiles per landmark.
+        profiles = [
+                np.array((#images, 2k)),
+                ... (#landmarks)
+                ]
+
+        in: list of matrices with all images
+            list of all shapes per image
+        out: matrix of profiles per landmark
+        '''
+        # create a zero matrix for all profiles per landmark
+        profiles = []
+        for s in range(shapes.shape[2]/2):
+            profiles.append(np.zeros((images.shape[0], 2*self.k)))
+
+        # iterate over all images, all shapes, and all landmarks to extract grey-level profiles
+        for i in range(len(images)):
+            # transpose image to be able to place correct coordinates (x, y)
+            image = images[i].T
+            for j in range(shapes[i].shape[0]):
+                shape = np.vstack(np.split(shapes[i][j], 2))
+                for l in range(shape.shape[1]):
+                    # make grayscale profile for each landmark couple
+                    profile = self.profile(image, (shape[:, l-2], shape[:, l-1], shape[:, l]))
+                    # normalize and derive profile
+                    profiles[l-1][i, :] = profile
+
+        return np.asarray(profiles)
+
+    # def project(self, profile, eigenvector, mean):
     #     '''
-    #     Deform a grey-level of a landmark according to a profile parameter b
+    #     Project profile onto one of the eigenvectors.
     #     See Cootes (1993) p.641:
-    #         g_new = mean + eigenvectors * b_new
+    #         b_g = eigenvectors.T * (g - mean)
 
-    #     out: deformed profile according to profile parameter
+    #     out: vector of profile parameters
+    #         eigenvalues that go with the profile
     #     '''
-    #     eigenvalues, eigenvectors, mean = self.get(index)
-    #     return mean + eigenvectors.dot(profile_param)
+    #     return np.dot(eigenvector.T, (profile - mean).T)
