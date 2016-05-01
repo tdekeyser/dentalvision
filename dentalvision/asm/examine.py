@@ -1,9 +1,8 @@
 import numpy as np
 
-from utils.structure import Shape
 from glm.profile import Profile
-
-import matplotlib.pyplot as plt
+from utils.structure import Shape
+from utils import plot
 
 
 class Examiner(object):
@@ -30,7 +29,7 @@ class Examiner(object):
             GreyLevelModel glmodel
             array of model points (x1, x2, ..., xN, y1, y2,..., yN)
             int t amount of pixels examined either side of the normal (t > k)
-        out: array of new points (x1, x2, ..., xN, y1, y2,..., yN)
+        out: Shape with adjustments (dx, dy) to better approximate target
         '''
         if not isinstance(model_points, Shape):
             model_points = Shape(model_points)
@@ -46,12 +45,11 @@ class Examiner(object):
             new_points[:, m-1] = self.get_best_match(points, t=t)
 
         #### Plot for TESTING
-        plt.plot(model_points.y, model_points.x, marker='o', color='r')
-        plt.scatter(new_points[1,:], new_points[0,:])
-        plt.show()
+        # plot.render_image(self.image.T, model_points, color=(255, 0, 0))
+        # plot.render_image(self.image.T, np.hstack(new_points), color=(255, 0, 0))
         ####
 
-        return np.hstack(new_points)
+        return Shape(new_points)
 
     def get_best_match(self, points, t=0):
         '''
@@ -65,7 +63,7 @@ class Examiner(object):
         out: tuple of coordinates that is the best grey-level match
         '''
         # initiate point as best match and its distance
-        best_match = points[1]
+        best_match = points[0]
         point_profile = self.glmodel.profile(self.image, points)
         distance = self.glmodel.evaluate(point_profile)
 
@@ -85,11 +83,5 @@ class Examiner(object):
             if new_distance < distance:
                 best_match = n_point
                 distance = new_distance
-
-        #### Plot for TESTING
-        x = [px for px, py in points_along_normal]
-        y = [py for px, py in points_along_normal]
-        plt.scatter(y, x, color='y')
-        ####
 
         return best_match

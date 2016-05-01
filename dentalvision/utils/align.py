@@ -22,8 +22,9 @@ class CoreAlign(object):
         in: target Shape
         out: scaled Shape object
         '''
+        scale = max(max(shape.x) - min(shape.x), max(shape.y) - min(shape.y))
         return Shape(
-            [shape.x/np.linalg.norm(shape.x), shape.y/np.linalg.norm(shape.y)]
+            [shape.x*(1/scale), shape.y*(1/scale)]
             )
 
     def scale_and_rotate(self, subject, s, theta, inverse=False):
@@ -32,14 +33,14 @@ class CoreAlign(object):
                             [s*math.cos(theta), -1*s*math.sin(theta)],
                             [s*math.sin(theta), s*math.cos(theta)]
                             ])
-        if not inverse:
-            return Shape(np.dot(rotation_matrix, subject.matrix))
-        else:
+        if inverse:
             return Shape(np.dot(rotation_matrix.T, subject.matrix))
+        else:
+            return Shape(np.dot(rotation_matrix, subject.matrix))
 
-    def transform(self, target, Tx, Ty, s, theta):
+    def transform(self, target, pose_parameters):
         '''
-        Perform transformations to move target
+        Perform transformations to move target.
 
         in: Shape target,
             translation params Tx, Ty,
@@ -47,15 +48,21 @@ class CoreAlign(object):
             rotation angle theta
         out: transformed Shape
         '''
+        # normalize target to avoid multiple scaling
+        target = self.normalize(target)
+        # get pose parameters and perform transformations
+        Tx, Ty, s, theta = pose_parameters
         scaled_and_rotated = self.scale_and_rotate(target, s, theta)
         return self.translate(scaled_and_rotated, Tx, Ty)
 
-    def invert_transform(self, target, Tx, Ty, s, theta):
+    def invert_transform(self, target, pose_parameters):
         '''
         Computes an inverse transformation of target
         '''
+        target = self.normalize(target)
+        Tx, Ty, s, theta = pose_parameters
         translated = self.translate(target, -1*Tx, -1*Ty)
-        return self.scale_and_rotate(translated, 1/s, theta, inverse=True)
+        return self.scale_and_rotate(translated, 1, theta, inverse=True)
 
 
 class CoreFinder(object):
@@ -95,3 +102,26 @@ class CoreFinder(object):
         scX, scY = subject.centroid()
         tcX, tcY = target.centroid()
         return (tcX - scX, tcY - scY)
+
+
+class Aligner(CoreAlign, CoreFinder):
+    '''
+    Alignment class that combines the alignment methods from CoreAlign and the
+    transformation variable finding methods from CoreFinder.
+    '''
+    def get_pose_parameters(self, subject, target):
+        '''
+        Find the pose parameters to align subject with target.
+        In: 1xC array shape1, shape2
+        Out: X_t, Y_t params that define the translation,
+            s, defines the scaling
+            theta, defines the rotation
+        '''
+        # find/perform transformations
+        Tx, Ty = self.find_translation(subject, target)
+        # compute a and b
+        a, b = self.get_transformation_parameters(subject, target)
+        s = self.find_scale(a, b)
+        theta = self.find_rotation_angle(a, b)
+
+        return (Tx, Ty, s, theta)

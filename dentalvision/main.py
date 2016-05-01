@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 from pdm.model import create_pdm
 from glm.model import create_glm
 from asm.model import ActiveShapeModel
+from asm.fit import Fitter
 from utils.structure import Shape
+from utils import plot
 
 
 def pointdistributionmodel():
@@ -51,26 +53,20 @@ def run():
     print '***Point-distribution model created.***'
 
     # 2. GRAYSCALE MODEL
-    glmodel = grayscalemodel(k=4)
+    glmodel = grayscalemodel(k=6)
     print '***Grey-level model created.***'
 
     # 3. ACTIVE SHAPE MODEL
     activeshape = ActiveShapeModel(pdmodel, glmodel)
     print '***Active Shape Model initiated.***'
 
-    # create some starting array
-    # init = init_shape()
     # get greyscale image
-    image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/10.tif'), cv2.COLOR_BGR2GRAY)
+    image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/01.tif'), cv2.COLOR_BGR2GRAY)
+    target = landmarks[2]
+    new_fit = activeshape.iterate(image, target, t=15)
 
-    init = landmarks[8]
-
-    new_fit = activeshape.iterate(image, init, t=6)
-
-    init = Shape(init)
-    plt.plot(init.x, init.y, marker='o', color='r')
-    plt.plot(new_fit.x, new_fit.y, marker='o', color='g')
-    plt.show()
+    # plot.render_image(image, target, title='Target')
+    plot.render_image(image, new_fit, title='Result after examination and fitting.')
 
 
 def load(path):

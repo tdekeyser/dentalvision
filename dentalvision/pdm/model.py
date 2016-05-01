@@ -38,7 +38,7 @@ def create_pdm(shapes):
     plot('gpa', mean, aligned)
 
     # perform PCA
-    eigenvalues, eigenvectors, m = pca(aligned, mean=mean, max_variance=0.98)
+    eigenvalues, eigenvectors, m = pca(aligned, mean=mean, max_variance=0.99)
     plot('eigenvectors', mean, eigenvectors)
 
     # create PointDistributionModel instance
@@ -54,15 +54,17 @@ class PointDistributionModel(object):
     of eigenvectors and corresponding eigenvalues.
     Based on shape parameters, it is able to create a
     variation on the mean shape.
+
+    Eigenvectors are scaled according to Blanz p.2 eq.7.
     '''
     def __init__(self, eigenvalues, eigenvectors, mean):
         self.dimension = eigenvalues.size
         self.eigenvalues = eigenvalues
         self.eigenvectors = eigenvectors
         self.mean = Shape(mean)
+
         # create a set of scaled eigenvectors
-        self.variance = self.eigenvalues/np.sum(self.eigenvalues)
-        self.scaled_eigenvectors = np.dot(self.eigenvectors, np.diag(self.variance))
+        self.scaled_eigenvectors = np.dot(self.eigenvectors, np.diag(np.sqrt(eigenvalues)))
 
     def deform(self, shape_param):
         '''

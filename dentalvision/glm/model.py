@@ -32,9 +32,9 @@ def create_glm(images, shapes, k=0):
         profiles = landmark_profiles[l]
         # build the model using a covariance matrix and mean per landmark
         mean = profiles.mean(0)
-        covariance = np.dot(profiles.T, profiles)
+        deviation = profiles - mean
+        covariance = np.dot(deviation.T, deviation)
         glmodel.build(covariance, mean)
-        print covariance.shape
 
     return glmodel
 
@@ -77,8 +77,8 @@ class GrayLevelModel(object):
         out: Mahalanobis distance measure
         '''
         cov, mean = self.get(self.M_index)
-        # np.linalg.inv(cov) returns Singular Matrix error --> not invertible...
-        return (profile - mean).T.dot(cov).dot(profile-mean)
+        # np.linalg.inv(cov) returns Singular Matrix error --> not invertible
+        return (profile - mean).T.dot(cov**-1).dot(profile-mean)
 
     def profile(self, image, points):
         '''
@@ -117,14 +117,3 @@ class GrayLevelModel(object):
                     profiles[l-1][i, :] = profile
 
         return np.asarray(profiles)
-
-    # def project(self, profile, eigenvector, mean):
-    #     '''
-    #     Project profile onto one of the eigenvectors.
-    #     See Cootes (1993) p.641:
-    #         b_g = eigenvectors.T * (g - mean)
-
-    #     out: vector of profile parameters
-    #         eigenvalues that go with the profile
-    #     '''
-    #     return np.dot(eigenvector.T, (profile - mean).T)

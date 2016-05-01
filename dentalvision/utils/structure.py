@@ -36,6 +36,12 @@ class Shape(object):
     def __eq__(self, other):
         return np.allclose(self.x, other.x) and np.allclose(self.y, other.y)
 
+    def __sub__(self, other):
+        return Shape([self.x - other.x, self.y - other.y])
+
+    def __add__(self, other):
+        return Shape([self.x + other.x, self.y + other.y])
+
     def reset_matrix(self):
         self.vector = np.hstack((self.x, self.y))
         self.matrix = np.vstack((self.x, self.y))

@@ -6,11 +6,12 @@ parameter space (Cootes 2000, 12).
 See algorithm in Cootes (2000), p. 12-13.
 '''
 import numpy as np
-from asm.fit import Fitter, Aligner
-from asm.examine import Examiner
-from utils.structure import Shape
 
-import matplotlib.pyplot as plt
+from asm.fit import Fitter
+from asm.examine import Examiner
+from utils.align import Aligner
+from utils.structure import Shape
+from utils import plot
 
 
 class ActiveShapeModel(object):
@@ -27,6 +28,7 @@ class ActiveShapeModel(object):
     def __init__(self, pdmodel, glmodel):
         self.pdmodel = pdmodel
         self.glmodel = glmodel
+
         # initialise examining/fitting/aligning classes
         self.fitter = Fitter(pdmodel)
         self.examiner = Examiner(glmodel)
@@ -39,59 +41,66 @@ class ActiveShapeModel(object):
         in: array of coordinates that gives a rough estimation of the target
                 in form (x1, ..., xN, y1, ..., yN)
             int t amount of pixels to be examined on each side of the normal of
-                each point during an iteration
+                each point during an iteration (t>k)
         '''
-        # initialise the mean at the center of the region
-        region = Shape(region)
-        self.examiner.set_image(image)
-        # get pose parameters to init in region
-        Tx, Ty, s, theta = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
+        if not isinstance(region, Shape):
+            region = Shape(region)
+
+        # get initial parameters
+        pose_para = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
+        b = np.zeros(self.pdmodel.dimension)
+
         # align model mean with region
-        shape_points = self.aligner.transform(self.pdmodel.mean, Tx, Ty, s, theta)
-        fitted_shape = Shape(np.zeros_like(region.vector))
+        shape_points = self.aligner.transform(self.pdmodel.mean, pose_para)
+        #plot.render_image(image, shape_points, title='Model mean initialisation')
+
+        # set initial fitting pose parameters and examiner image
+        self.fitter.start_pose = pose_para
+        self.examiner.set_image(image)
 
         i = 0
-        while shape_points != fitted_shape:
-            fitted_shape = shape_points
-            # examine t pixels on the normals of all points in the model (t > k)
-            examinated_shape = self.examiner.examine(shape_points, t=t)
+        shape_difference = 1
+        while np.sum(shape_difference) > 0:
+            # examine t pixels on the normals of all points in the model
+            adjustments = self.examiner.examine(shape_points, t=t)
             # find the best parameters to fit the model to the examined points
-            Tx, Ty, s, theta, c = self.fitter.fit(examinated_shape, n=0)
-            # transform the model according to the parameters
-            shape_points = self.transform(Tx, Ty, s, theta, c)
+            pose_para, c = self.fitter.fit(shape_points, adjustments)
 
+            # add constraints to the shape parameter
+            c = self.constrain(c)
 
-        ##### plot intermediate stages for TESTING
-            # plt.plot(region.x, region.y)
-            # plt.plot(shape_points.x, shape_points.y, marker='o')
-            # plt.show()
+            # transform the model according to the new parameters
+            shape_points = self.transform(pose_para, c)
 
+            # look for change in shape parameter and stop if necessary
+            shape_difference = c - b
+            b = c
+
+            # keep iteration count
             i += 1
-            print str(i)
-            if i == 10:
+            print '**** ITER ---', str(i)
+            print '(constr shape param)', c[:8]
+            print '(eigenvalues)', self.pdmodel.eigenvalues[:8]
+            # #### avoid infinite loops
+            if i == 20:
                 break
-        #####
+            #####
 
         return shape_points
 
-    def transform(self, Tx, Ty, s, theta, b):
+    def transform(self, pose_para, b):
         '''
         Transform the model to the image by inserting the most suitable
         pose and shape parameters
         '''
-        mode = self.pdmodel.deform(self.constrain(b))
-        return self.aligner.transform(mode, Tx, Ty, s, theta)
+        mode = self.pdmodel.deform(b)
+        # return mode
+        # plot.render_shape(mode)
+        return self.aligner.transform(mode, pose_para)
 
     def constrain(self, vector):
         '''
-        Define constrains for the shape parameter vector.
-
-        According to Cootes, all elements of the vector should agree
-        to the following constraint:
-            |v_i| < 3*sqrt(eigenval_i)
+        Add constraints to shape parameter proportional to the
+        eigenvalues of the point distribution model.
         '''
-        uplimit = 3*np.sqrt(self.pdmodel.eigenvalues)
-        lowlimit = -1*uplimit
-        vector[vector > uplimit] = uplimit[np.where(vector > uplimit)]
-        vector[vector < lowlimit] = lowlimit[np.where(vector < lowlimit)]
-        return vector
+        return vector.dot(np.diag(np.sqrt(self.pdmodel.eigenvalues)))

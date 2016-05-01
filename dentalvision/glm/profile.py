@@ -87,5 +87,5 @@ class Profile(object):
         '''
         Normalize a vector such that its sum is equal to 1.
         '''
-        div = np.sum(np.absolute(vector)) if bool(np.sum(np.absolute(vector))) else 1
+        div = np.sum(vector) if bool(np.sum(vector)) else 1
         return vector/div

@@ -39,7 +39,7 @@ def pca(samples, mean=None, max_variance=1, full_matrices=False):
                 eigenvalues = eigenvalues[:i]
                 eigenvectors = eigenvectors[:, :i]
 
-    return eigenvalues, normalize_vectors(eigenvectors), mean
+    return eigenvalues, eigenvectors, mean
 
 
 def normalize_vectors(vectors):
