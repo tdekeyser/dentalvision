@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from utils.structure import Shape
 
 
-PLOT_STAGES = False
+PLOT_STAGES = True
 
 
 def plot(choice, *args):
@@ -40,7 +40,7 @@ def plot_gpa(mean, aligned_shapes):
         ax, ay = np.split(a, 2)
         plt.scatter(ax, ay)
     axes = plt.gca()
-    # axes.set_xlim([-1, 1])
+    axes.set_xlim([-0.8, 0.8])
     plt.show()
 
 
@@ -53,7 +53,7 @@ def plot_eigenvectors(mean, eigenvectors):
     plt.plot(mx, my, marker='o')
 
     axes = plt.gca()
-    # axes.set_xlim([-1, 1])
+    axes.set_xlim([-0.8, 0.8])
 
     for i in range(6):
         vec = eigenvectors[:, i].T
@@ -72,9 +72,9 @@ def plot_deformablemodel(model):
     # create variations
     # for i in range(20):
     limit = 10
-    z[2] = 0
-    z[1] = 2
-    z[0] = -1
+    z[2] = 0.3
+    z[1] = 0
+    z[0] = 0.1
     var = model.deform(z)
     plt.plot(var.x, var.y, marker='o')
 
