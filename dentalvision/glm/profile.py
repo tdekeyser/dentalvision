@@ -19,14 +19,13 @@ class Profile(object):
         Get a sample from self.k points on each side of the normal between
         the triple in points.
 
-        in: triple previous point, point, and next point
+        in: triple previous_point, point, and next_point
         out: list of tuples along the normal through point
         '''
-        prev_point, point, next_point = points
         # compute the normal
-        self.normal = self._compute_normal(prev_point, next_point)
+        self.normal = self._compute_normal(points)
         # sample along the normal
-        return self._sample(point)
+        return self._sample(points[1])
 
     def profile(self, image, points):
         '''
@@ -62,19 +61,26 @@ class Profile(object):
 
         negatives.reverse()
 
-        return negatives + start + positives
+        return np.array(negatives + start + positives)
 
-    def _compute_normal(self, a, b):
+    def _compute_normal(self, points):
+        '''
+        Compute the normal between three points.
+        '''
+        prev, curr, nex = points
+        return self._normal(prev, nex)
+        return (self._normal(prev, curr).dot(self._normal(curr, nex)))/2
+
+    def _normal(self, a, b):
         '''
         Compute the normal between two points a and b.
 
         in: tuple coordinates a and b
         out: 1x2 array normal
         '''
-        dx = b[0] - a[0]
-        dy = b[1] - a[1]
-        tx, ty = (dx/math.sqrt(dx**2+dy**2), dy/math.sqrt(dx**2+dy**2))
-        return (-1*ty, tx)
+        d = b - a
+        tx, ty = d/math.sqrt(np.sum(np.power(d, 2)))
+        return np.array([-1*ty, tx])
 
     def _derive(self, profile):
         '''

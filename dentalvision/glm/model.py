@@ -44,13 +44,15 @@ class GrayLevelModel(object):
     Build a grey-level model that is able to evaluate the grey-level
     of a new pattern to a mean for that landmark.
     '''
-    def __init__(self, amount_of_landmarks, k):
+    def __init__(self, amount_of_landmarks, k, level=0):
         self.amount_of_landmarks = amount_of_landmarks
+        self.k = k
+        self.level = level
+
         self.covariance = []
         self.mean = []
-        self.k = k
         self.profiler = Profile(k)
-        self.M_index = 0
+        self.m_index = 0
 
     def get(self, index):
         '''
@@ -64,7 +66,11 @@ class GrayLevelModel(object):
         self.mean.append(mean)
 
     def set_evaluation_index(self, m):
-        self.M_index = m
+        '''
+        Set index to different landmark in order to compute
+        the Mahalanobis distance of the correct landmark.
+        '''
+        self.m_index = m
 
     def evaluate(self, profile):
         '''
@@ -76,9 +82,9 @@ class GrayLevelModel(object):
         in: vector of grey-level profile
         out: Mahalanobis distance measure
         '''
-        cov, mean = self.get(self.M_index)
+        cov, mean = self.get(self.m_index)
         # np.linalg.inv(cov) returns Singular Matrix error --> not invertible
-        return (profile - mean).T.dot(cov**-1).dot(profile-mean)
+        return (profile - mean).T.dot(cov).dot(profile-mean)
 
     def profile(self, image, points):
         '''
@@ -109,7 +115,7 @@ class GrayLevelModel(object):
             # transpose image to be able to place correct coordinates (x, y)
             image = images[i].T
             for j in range(shapes[i].shape[0]):
-                shape = np.vstack(np.split(shapes[i][j], 2))
+                shape = np.vstack(np.split(shapes[i, j], 2))
                 for l in range(shape.shape[1]):
                     # make grayscale profile for each landmark couple
                     profile = self.profile(image, (shape[:, l-2], shape[:, l-1], shape[:, l]))

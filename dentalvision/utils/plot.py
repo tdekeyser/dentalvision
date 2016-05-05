@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from utils.structure import Shape
 
 
-PLOT_STAGES = True
+PLOT_STAGES = False
 
 
 def plot(choice, *args):
@@ -95,18 +95,18 @@ def render_shape(shape):
     plt.show()
 
 
-def render_image(img, points, color=None, title='Image'):
+def render_image(img, shape, color=None, title='Image'):
     '''
-    Draw points over image
+    Draw shape over image
     '''
-    if not isinstance(points, Shape):
-        points = Shape(points)
+    if not isinstance(shape, Shape):
+        shape = Shape(shape)
     if color is None:
-        color = (255, 0, 0)        
+        color = (255, 0, 0)
 
-    for i in range(points.length - 1):
-        cv2.line(img, (int(points.x[i]), int(points.y[i])),
-            (int(points.x[i + 1]), int(points.y[i + 1])), color, 5)
+    for i in range(shape.length - 1):
+        cv2.line(img, (int(shape.x[i]), int(shape.y[i])),
+            (int(shape.x[i + 1]), int(shape.y[i + 1])), color, 5)
 
     height = 600
     scale = height / float(img.shape[0])
