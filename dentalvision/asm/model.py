@@ -35,15 +35,15 @@ class ActiveShapeModel(object):
         self.examiner = Examiner(glmodel_pyramid)
         self.aligner = Aligner()
 
-    def multi_resolution_search(self, image, region, t=0, max_level=0, max_iter=5):
+    def multi_resolution_search(self, image, region, t=0, max_level=0, max_iter=5, n=None):
         '''
         Perform Multi-resolution Search ASM algorithm.
 
         in: np array of guassian image pyramid
-            np array region; array of coordinates that gives a rough estimation of the target
-                in form (x1, ..., xN, y1, ..., yN)
-            int t; amount of pixels to be examined on each side of the normal of
-                each point during an iteration (t>k)
+            np array region; array of coordinates that gives a rough
+                estimation of the target in form (x1, ..., xN, y1, ..., yN)
+            int t; amount of pixels to be examined on each side of the
+                normal of each point during an iteration (t>k)
             int max_levels; max amount of levels to be searched
             int max_iter; amount to stop iterations at each level
         '''
@@ -61,23 +61,23 @@ class ActiveShapeModel(object):
             # get image at level resolution
             image = image_pyramid[level]
             # search in the image
-            region, b = self.search(image, region, t=t, level=level, max_iter=max_iter)
+            region = self.search(image, region, t=t, level=level, max_iter=max_iter, n=n)
             # plot.render_image(image_pyramid[0], region, title='Result in level ' + str(level))
             # descend the pyramid
             level -= 1
 
         return region
 
-    def search(self, image, region, t=0, level=0, max_iter=5):
+    def search(self, image, region, t=0, level=0, max_iter=5, n=None):
         '''
         Perform the Active Shape Model algorithm in input region.
 
         in: array image; input image
-            array points; array of coordinates that gives a rough estimation of the target
-                in form (x1, ..., xN, y1, ..., yN)
+            array points; array of coordinates that gives a rough estimation
+                of the target in form (x1, ..., xN, y1, ..., yN)
             array b; current shape parameter
-            int t; amount of pixels to be examined on each side of the normal of
-                each point during an iteration (t>k)
+            int t; amount of pixels to be examined on each side of the normal
+                of each point during an iteration (t>k)
         out: array shape_points; result of the algorithm
         '''
         # get initial parameters
@@ -99,7 +99,7 @@ class ActiveShapeModel(object):
             # examine t pixels on the normals of all points in the model
             adjustments = self.examiner.examine(points, t=t, pyramid_level=level)
             # find the best parameters to fit the model to the examined points
-            pose_para, c = self.fitter.fit(points, adjustments)
+            pose_para, c = self.fitter.fit(points, adjustments, n=n)
 
             # add constraints to the shape parameter
             c = self.constrain(c)
@@ -122,7 +122,7 @@ class ActiveShapeModel(object):
                 break
             #####
 
-        return points, c
+        return points
 
     def transform(self, pose_para, b):
         '''
@@ -132,9 +132,22 @@ class ActiveShapeModel(object):
         mode = self.pdmodel.deform(b)
         return self.aligner.transform(mode, pose_para)
 
+    # def _constrain(self, vector):
+    #     '''
+    #     Add constraints to shape parameter proportional to the
+    #     eigenvalues of the point distribution model.
+    #     '''
+    #     return vector.dot(np.diag(np.sqrt(self.pdmodel.eigenvalues)))
+
     def constrain(self, vector):
         '''
-        Add constraints to shape parameter proportional to the
-        eigenvalues of the point distribution model.
+        Add constraints to shape parameter proportional to the eigenvalues
+        of the point distribution model. According to Cootes et al., all
+        elements of the vector should agree to the following constraint:
+          |v_i| < 3*sqrt(eigenval_i)
         '''
-        return vector.dot(np.diag(np.sqrt(self.pdmodel.eigenvalues)))
+        uplimit = 3*self.pdmodel.eigenvalues
+        lowlimit = -1*uplimit
+        vector[vector > uplimit] = uplimit[np.where(vector > uplimit)]
+        vector[vector < lowlimit] = lowlimit[np.where(vector < lowlimit)]
+        return vector

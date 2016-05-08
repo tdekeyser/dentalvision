@@ -34,7 +34,7 @@ class Fitter(object):
         # find pose parameters to align with new image points
         Tx, Ty, s, theta = self.start_pose
         dx, dy, ds, dTheta = self.aligner.get_pose_parameters(prev_shape, new_shape)
-        changed_pose = (Tx + dx, Ty + dy, min(s-18*ds, s), theta + dTheta)
+        changed_pose = (Tx + dx, Ty + dy, min(s*ds, s), theta + dTheta)
 
         # align image with model
         inv_pose = (Tx + dx, Ty + dy, s, theta + dTheta)

@@ -64,7 +64,7 @@ class PointDistributionModel(object):
         self.mean = Shape(mean)
 
         # create a set of scaled eigenvectors
-        self.scaled_eigenvectors = np.dot(self.eigenvectors, np.diag(np.sqrt(eigenvalues)))
+        self.scaled_eigenvectors = np.dot(self.eigenvectors, np.diag(self.eigenvalues))
 
     def deform(self, shape_param):
         '''

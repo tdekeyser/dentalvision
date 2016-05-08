@@ -1,7 +1,6 @@
 '''
 Perform PCA analysis
 '''
-import math
 import numpy as np
 
 
@@ -40,7 +39,3 @@ def pca(samples, mean=None, max_variance=1, full_matrices=False):
                 eigenvectors = eigenvectors[:, :i]
 
     return eigenvalues, eigenvectors, mean
-
-
-def normalize_vectors(vectors):
-    return vectors/math.sqrt(np.sum(vectors**2))

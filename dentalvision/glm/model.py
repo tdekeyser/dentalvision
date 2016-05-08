@@ -84,7 +84,7 @@ class GrayLevelModel(object):
         '''
         cov, mean = self.get(self.m_index)
         # np.linalg.inv(cov) returns Singular Matrix error --> not invertible
-        return (profile - mean).T.dot(cov).dot(profile-mean)
+        return (profile - mean).T.dot(cov**-1).dot(profile-mean)
 
     def profile(self, image, points):
         '''

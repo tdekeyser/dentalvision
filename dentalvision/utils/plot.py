@@ -71,10 +71,9 @@ def plot_deformablemodel(model):
 
     # create variations
     # for i in range(20):
-    limit = 10
     z[2] = 0.3
-    z[1] = 0
-    z[0] = 0.1
+    z[1] = 0.1
+    z[0] = 0
     var = model.deform(z)
     plt.plot(var.x, var.y, marker='o')
 
@@ -90,9 +89,23 @@ def render_shape(shape):
     plt.plot(shape.x, shape.y, marker='o')
 
     axes = plt.gca()
-    axes.set_xlim([-1, 1])
+    # axes.set_xlim([-1, 1])
     # axes.set_ylim([-0.5, 0.5])
     plt.show()
+
+
+def render_shape_to_image(shape):
+    if not isinstance(shape, Shape):
+        shape = Shape(shape)
+
+    img = np.zeros((1600, 3000))
+    color = (255, 255, 255)
+
+    for i in range(shape.length - 1):
+        cv2.line(img, (int(shape.x[i]), int(shape.y[i])),
+            (int(shape.x[i + 1]), int(shape.y[i + 1])), color, 5)
+
+    return img
 
 
 def render_image(img, shape, color=None, title='Image'):
@@ -108,6 +121,16 @@ def render_image(img, shape, color=None, title='Image'):
         cv2.line(img, (int(shape.x[i]), int(shape.y[i])),
             (int(shape.x[i + 1]), int(shape.y[i + 1])), color, 5)
 
+    render(img)
+
+
+def render_inits(img, matches, color=None, title='Inits'):
+    for m in matches:
+        cv2.ellipse(img, tuple(m), (50, 120), 0, 0, 360, (255, 0, 0), 5)
+    render(img)
+
+
+def render(img, title='img'):
     height = 600
     scale = height / float(img.shape[0])
     window_width = int(img.shape[1] * scale)
