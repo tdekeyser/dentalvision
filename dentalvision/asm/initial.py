@@ -18,8 +18,8 @@ class InitModel(object):
 
     in: Shape mean shape
         int variance; amount of different initiatisation
-        possibilities, i.e. 8 in the case of 8 different
-        incisors.
+            possibilities, i.e. 8 in the case of 8 different
+            incisors.
     '''
     def __init__(self, shape, variance):
         self.variance = variance

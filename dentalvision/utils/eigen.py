@@ -6,14 +6,21 @@ from pdm.pca import pca
 
 class EigenModel(object):
     '''
-    Create an eigen model from the training images in order
-    to find initial positions for the Active Shape Model.
+    Create an eigen model that is able to reconstruct data according
+    to its principal components.
 
-    in: np array of training images, for which each row is an image
+    in: np array of training images, for which each row is a new
+            observation.
     '''
     def __init__(self, training_images):
         # build the eigen model
         self._build(training_images)
+
+    def dist_from_mean(self, observation):
+        '''
+        Compute the difference between the mean and an observation.
+        '''
+        return self.mean - observation
 
     def project_and_reconstruct(self, img):
         '''
@@ -30,7 +37,7 @@ class EigenModel(object):
         '''
         # compute the optimal coefficients a_i for any new image X
         # these are the best approximation coefficients for X
-        return (img-self.mean).dot(self.eigenvectors)
+        return self.dist_from_mean(img).dot(self.eigenvectors)
 
     def reconstruct(self, projection):
         '''

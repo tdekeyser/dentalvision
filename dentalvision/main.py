@@ -23,29 +23,31 @@ def run():
 
 
     ####### -------- SETUP --------- ######
-    # set initialiser search region
-    search_region = ((880, 1140), (1350, 1700), 15)
+    # set initialiser search region; (x_min, x_max, y_min, y_max, searchStep)
+    search_region = ((810, 1200), (1350, 1650), 25)
     # set initialisation
     featuredetector = FeatureDetect()
     # build active shape model
-    asm = ActiveShapeCreator(images, landmarks_per_image, landmarks)
+    # asm = ActiveShapeCreator(images, landmarks_per_image, landmarks)
 
 
     ####### -------- TEST ---------- ######
-    image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/03.tif'), cv2.COLOR_BGR2GRAY)
+    image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/02.tif'), cv2.COLOR_BGR2GRAY)
 
     # perform feature matching to find init regions
+    print '---Searching for matches...'
     initial_regions = featuredetector.match(image, search_region)
-    # init = initial_regions[0]
+    print 'Done.'
+
     image = cv2.medianBlur(image, 5)
     # image = cv2.Canny(image, 35, 40)
 
     for init in initial_regions:
-        # plot.render_image(image, init)
+        plot.render_image(image, init)
         # search and fit image
-        new_fit = asm.activeshape.multi_resolution_search(image, init, t=20, max_level=4, max_iter=10, n=None)
+        # new_fit = asm.activeshape.multi_resolution_search(image, init, t=20, max_level=4, max_iter=10, n=None)
         # plot result
-        plot.render_image(image, new_fit, title='result new fit from main.py')
+        # plot.render_image(image, new_fit, title='result new fit from main.py')
 
 
 def load(path):
@@ -75,7 +77,7 @@ def load_data():
 
 class FeatureDetect(object):
 
-    def __init__(self, search_region):
+    def __init__(self):
         print '***Training feature detector...'
         self.detector = create_featuredetectionmodel()
         print 'Done.'
@@ -96,7 +98,8 @@ class FeatureDetect(object):
 
         works: 90, 10, 360, 9
         '''
-        ellipse = cv2.ellipse2Poly(tuple(center), (120, 85), 90, 0, 360, 9)
+        print center
+        ellipse = cv2.ellipse2Poly(tuple(center), (125, 85), 90, 0, 360, 9)
         return Shape(np.hstack(ellipse[:amount_of_points, :].T))
 
 

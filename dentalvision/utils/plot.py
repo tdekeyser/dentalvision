@@ -70,7 +70,6 @@ def plot_deformablemodel(model):
     plt.plot(mode.x, mode.y)
 
     # create variations
-    # for i in range(20):
     z[2] = 0.3
     z[1] = 0.1
     z[0] = 0
@@ -87,25 +86,7 @@ def render_shape(shape):
     if not isinstance(shape, Shape):
         shape = Shape(shape)
     plt.plot(shape.x, shape.y, marker='o')
-
-    axes = plt.gca()
-    # axes.set_xlim([-1, 1])
-    # axes.set_ylim([-0.5, 0.5])
     plt.show()
-
-
-def render_shape_to_image(shape):
-    if not isinstance(shape, Shape):
-        shape = Shape(shape)
-
-    img = np.zeros((1600, 3000))
-    color = (255, 255, 255)
-
-    for i in range(shape.length - 1):
-        cv2.line(img, (int(shape.x[i]), int(shape.y[i])),
-            (int(shape.x[i + 1]), int(shape.y[i + 1])), color, 5)
-
-    return img
 
 
 def render_image(img, shape, color=None, title='Image'):

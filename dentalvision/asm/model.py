@@ -52,9 +52,8 @@ class ActiveShapeModel(object):
         # create Gaussian pyramid of input image
         image_pyramid = gaussian_pyramid(image, levels=len(self.glmodel_pyramid))
 
-        ###test
+        # allow examiner to render the largest image (for testing)
         self.examiner.bigImage = image_pyramid[0]
-        ##
 
         level = max_level
         while level >= 0:
@@ -131,13 +130,6 @@ class ActiveShapeModel(object):
         '''
         mode = self.pdmodel.deform(b)
         return self.aligner.transform(mode, pose_para)
-
-    # def _constrain(self, vector):
-    #     '''
-    #     Add constraints to shape parameter proportional to the
-    #     eigenvalues of the point distribution model.
-    #     '''
-    #     return vector.dot(np.diag(np.sqrt(self.pdmodel.eigenvalues)))
 
     def constrain(self, vector):
         '''
