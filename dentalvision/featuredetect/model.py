@@ -2,11 +2,12 @@ import os
 import cv2
 import numpy as np
 
-from utils.eigen import EigenModel
+from featuredetect.eigen import EigenModel
 
 
-# try flippped/ or nonflipped/
 ROOT = '../Project Data/_Data/Slicings/nonflipped/'
+TRAIN_AMOUNT = 112          # amount of training images
+TRAIN_DIM = 35200           # (multiplied) size of the training images
 
 
 def create_featuredetectionmodel():
@@ -21,13 +22,14 @@ def build_training_array():
     Create array of all training images using the sliced landmark
     shapes. Returns array of images, for which each row is an image.
     '''
-    images = np.zeros((112, 35200))
+    images = np.zeros((TRAIN_AMOUNT, TRAIN_DIM))
     index = 0
     for i in os.listdir(ROOT):
-        # convert to grayscale and blur to remove some noise
+        # convert to grayscale
         image = cv2.cvtColor(cv2.imread(ROOT + i), cv2.COLOR_BGR2GRAY)
-        image = cv2.medianBlur(image, 3)
-
+        # blur to remove some noise
+        image = cv2.medianBlur(image, 5)
+        # add images to the array
         images[index, :] = np.hstack(image)
         index += 1
     return images
@@ -35,14 +37,22 @@ def build_training_array():
 
 class FeatureDetection(object):
     '''
-    Training stage takes a rather long time.
+    Train a feature detection system based on an eigen model of training
+    images and their MSE threshold.
+
+    A new image is reconstructed using the eigenvectors of the model and
+    evaluated using MSE w.r.t. the model mean. Matches that lie too close
+    to one another are removed from the result.
+
+    in: np array of training images per row
     '''
     def __init__(self, training_images):
-        # make eigen model from the images
         self.eigenmodel = EigenModel(training_images)
-        self.min_threshold, self.max_threshold = self._train_threshold(training_images)
+        # self.min_threshold, self.max_threshold = self._train_threshold(training_images)
+        self.min_threshold = 0
+        self.max_threshold = 10000
 
-    def match(self, image, search_region, target_dimension):
+    def match(self, image, search_region, match_frame):
         '''
         Use eigen model to find shapes in an input image.
 
@@ -56,16 +66,16 @@ class FeatureDetection(object):
         (x_min, x_max), (y_min, y_max), searchStep = search_region
 
         matches = []
-        for x in range(x_min, x_max, searchStep):
+        for x in range(x_min, x_max, searchStep*4):
             for y in range(y_min, y_max, searchStep):
                 # slice frame from the image
-                frame = self._slice(image, (x, y), target_dimension)
+                frame = self._slice(image, (x, y), match_frame)
                 # evaluate the frame w.r.t. the model
                 evaluation = self._evaluate(frame)
                 # add to match if evaluation lies within threshold
                 if self.min_threshold <= evaluation <= self.max_threshold:
                     matches.append(np.array([evaluation, y, x]))
-        # return centers
+        # filter close-by centers
         return self._get_distinct(matches)
 
     def _train_threshold(self, images):
@@ -101,9 +111,10 @@ class FeatureDetection(object):
         '''
         # sort input
         indistincts = sorted(indistincts, key=lambda x: x[0])
-        # only take distinct matches
         distincts = [indistincts[0][1:]]
         for s in range(1, len(indistincts)):
+            # only add those that lie far from each other
             if not any(abs(int(np.sum(d) - np.sum(indistincts[s][1:]))) < 80 for d in distincts):
                 distincts.append(indistincts[s][1:])
+        # return as integers
         return np.asarray(distincts, dtype=np.uint32)

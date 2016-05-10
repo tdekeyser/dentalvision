@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from pdm.pca import pca
+from utils.pca import pca
 
 
 class EigenModel(object):
@@ -52,8 +52,8 @@ class EigenModel(object):
     def _build(self, images):
         # perform PCA on images
         self.eigenvalues, self.eigenvectors, self.mean = pca(images, max_variance=0.98)
-        # # eigenvectors need to be orthogonal and of unit form
-        # self.eigenvectors = self._normalize(eigenvectors)
+        # eigenvectors need to be orthogonal and of unit form
+        self.eigenvectors = self._normalize(self.eigenvectors)
 
     def _normalize(self, vectors):
         return vectors/math.sqrt(np.sum(vectors**2))

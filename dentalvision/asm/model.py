@@ -101,7 +101,7 @@ class ActiveShapeModel(object):
             pose_para, c = self.fitter.fit(points, adjustments, n=n)
 
             # add constraints to the shape parameter
-            c = self.constrain(c)
+            # c = self.constrain(c)
 
             # transform the model according to the new parameters
             points = self.transform(pose_para, c)

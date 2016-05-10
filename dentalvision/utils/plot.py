@@ -103,13 +103,7 @@ def render_image(img, shape, color=None, title='Image'):
             (int(shape.x[i + 1]), int(shape.y[i + 1])), color, 5)
 
     render(img)
-
-
-def render_inits(img, matches, color=None, title='Inits'):
-    for m in matches:
-        cv2.ellipse(img, tuple(m), (50, 120), 0, 0, 360, (255, 0, 0), 5)
-    render(img)
-
+    
 
 def render(img, title='img'):
     height = 600

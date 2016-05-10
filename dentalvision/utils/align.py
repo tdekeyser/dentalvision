@@ -60,7 +60,7 @@ class CoreAlign(object):
         '''
         Tx, Ty, s, theta = pose_parameters
         translated = self.translate(target, -1*Tx, -1*Ty)
-        return self.scale_and_rotate(translated, 1/s, theta, inverse=True)
+        return self.scale_and_rotate(translated, 1/s, -1*theta, inverse=False)
 
 
 class CoreFinder(object):

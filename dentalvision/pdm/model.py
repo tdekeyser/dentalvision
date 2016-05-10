@@ -14,7 +14,7 @@ parameters.
 import numpy as np
 
 from pdm.gpa import gpa
-from pdm.pca import pca
+from utils.pca import pca
 from utils.structure import Shape
 from utils.plot import plot
 
