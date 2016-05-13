@@ -34,10 +34,10 @@ class Fitter(object):
         # find pose parameters to align with new image points
         Tx, Ty, s, theta = self.start_pose
         dx, dy, ds, dTheta = self.aligner.get_pose_parameters(prev_shape, new_shape)
-        changed_pose = (Tx + dx, Ty + dy, s*ds, theta + dTheta)
+        changed_pose = (Tx + dx, Ty + dy, s*ds, theta+dTheta)
 
         # align image with model
-        inv_pose = (Tx + dx, Ty + dy, s*ds, theta + dTheta)
+        inv_pose = (Tx + dx, Ty + dy, s*ds, theta+dTheta)
         y = self.aligner.invert_transform(new_shape, inv_pose)
 
         # SVD on scaled eigenvectors of the model

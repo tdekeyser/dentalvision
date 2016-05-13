@@ -1,96 +1,109 @@
-import os
-import cv2
 import numpy as np
+import cv2
 
 from pdm.model import create_pdm
 from glm.model import create_glm
 from asm.model import ActiveShapeModel
-
 from featuredetect.model import create_featuredetectionmodel
-
 from utils.multiresolution import gaussian_pyramid
 from utils.structure import Shape
 from utils import plot
+from loader import DataLoader
 
 
-IMAGE_DIR = '../Project Data/_Data/Radiographs/'
-LANDMARK_DIR = '../Project Data/_Data/Landmarks/original/'
-LANDMARK_AMOUNT = 40            # amount of landmarks per tooth
 MATCH_DIM = (320, 110)          # dimensions searched by feature detector
+LANDMARK_AMOUNT = 40            # amount of landmarks per tooth
 
 
 def run():
-    # load images and landmarks
-    images, landmarks_per_image, landmarks = load_data()
+    '''
+    Main method of the package.
+
+    1. Loading:
+        Loads data from the input constants in loader.py.
+        Returns training and test sets from the image files and
+        the landmark files.
+        The image data sets is then blurred with a median filter
+        to remove some noise of the radiographs.
+
+    2. Model SETUP:
+        Two systems are trained. For initialisation, a feature
+        detector is used that can switch between semi-automatic
+        to fully automated search. Semi-automated search involved
+        a search in a restricted space. Fully automated search
+        uses a trained approximation of a restricted search space.
+        Then, an Active Shape Model is trained using the loaded
+        radiograph data. The model creates a shape model and a model
+        of the gray level profiles around each model point.
+
+    3. Test environment:
+        The models are tested by first scanning the image for
+        matching regions using the feature detector and then by
+        initialising the active shape model on the detected region.
+    '''
+    # ------------- LOAD DATA -------------- #
+    loader = DataLoader()
+    trainim, testim, trainlandmarks, testlandmarks, landmarks_per_image = loader.leave_one_out(test_index=4)
     # remove some noise from the image data
-    images = np.asarray([cv2.medianBlur(image, 5) for image in images])
+    for i in range(trainim.shape[0]):
+        trainim[i] = remove_noise(trainim[i])
 
     # --------------- SETUP ---------------- #
-    # set initialisation
-    featuredetector = FeatureDetect()
+    # train a Feature Detection system
+    featuredetector = FDSetup()
+    # fully automatic:
+    featuredetector.search_region = featuredetector.scan_region(trainlandmarks, diff=20, searchStep=20)
     # semi-automatic:
     # featuredetector.search_region = ((880, 1130), (1350, 1670), 15)     # for radiograph 1
-    # fully automatic:
-    featuredetector.search_region = featuredetector.scan_region(landmarks, diff=10, searchStep=30)
     print '---Search space set to', featuredetector.search_region
 
-    # build active shape model
-    asm = ActiveShapeCreator(images, landmarks_per_image, landmarks)
+    # build and train an Active Shape Model
+    asm = ASMSetup(trainim, landmarks_per_image, trainlandmarks, k=10, levels=4)
 
     # --------------- TEST ----------------- #
-    image = cv2.cvtColor(cv2.imread('../Project Data/_Data/Radiographs/13.tif'), cv2.COLOR_BGR2GRAY)
-    # remove some noise
-    image = cv2.medianBlur(image, 3)
+    # remove some noise from the test image
+    testim = remove_noise(testim)
 
     # perform feature matching to find init regions
     print '---Searching for matches...'
-    initial_regions = featuredetector.match(image)
+    matches = featuredetector.match(testim)
     print 'Done.'
 
-    # image = cv2.Canny(image, 35, 40)
-
-    for init in initial_regions:
-        # plot.render_image(image, init)
+    for i in range(len(matches)):
+        # plot.render_image(testim, init)
         # search and fit image
-        new_fit = asm.activeshape.multi_resolution_search(image, init, t=20, max_level=4, max_iter=10, n=None)
+        new_fit = asm.activeshape.multi_resolution_search(testim, matches[i], t=20, max_level=3, max_iter=20, n=None)
+        mse = np.zeros((1, testlandmarks.shape[0]))
+        for i in range(testlandmarks.shape[0]):
+            mse[0, i] = mean_squared_error(testlandmarks[i], new_fit)
+        min_index = np.argmin(mse)
+        print 'MSE:', mse[0, min_index]
         # plot result
-        plot.render_image(image, new_fit, title='result new fit from main.py')
+        plot.render_image(testim, new_fit, title='result new fit from main.py')
+        # plot target
+        plot.render_image(testim, testlandmarks[min_index])
 
 
-def load(path):
+def remove_noise(img):
     '''
-    Load and parse the data from path, and return arrays of x and y coordinates
-    Data should be in the form (x1, y1)
-
-    in: String pathdirectory
-    out: 1xc array (x1, ..., xN, y1, ..., yN)
+    Blur image to partially remove noise. Uses a median filter.
     '''
-    data = np.loadtxt(path)
-    x = data[::2, ]
-    y = data[1::2, ]
-    return np.hstack((x, y))
+    return cv2.medianBlur(img, 5)
 
 
-def load_data():
+def mean_squared_error(landmark, fit):
     '''
-    Loads images and landmarks, both as array and as list of arrays per image.
-    Horrible one-liners, but they do the job.
+    Compute the mean squared error of a fitted shape w.r.t. a
+    test landmark.
 
-    out: np array images; array with grayscaled images per row
-        list of np arrays landmarks_per_image; array with rows of landmarks for
-            each image
-        np array landmarks; array with all landmarks as rows, randomly ordered
+    in: np array landmark
+        Shape fit
+    out: int mse
     '''
-    images = np.asarray([cv2.cvtColor(cv2.imread(IMAGE_DIR + im), cv2.COLOR_BGR2GRAY) for im in os.listdir(IMAGE_DIR) if im.endswith('.tif')])
-    # images = images[:13]
-    landmarks_per_image = []
-    for i in range(len(images)):
-        landmarks_per_image.append([load(LANDMARK_DIR + s) for s in os.listdir(LANDMARK_DIR) if 'landmarks'+str(i+1)+'-' in s])
-    landmarks = np.asarray([load(LANDMARK_DIR + s) for s in os.listdir(LANDMARK_DIR) if s.endswith('.txt')])
-    return images, landmarks_per_image, landmarks
+    return np.sum((fit.vector - landmark)**2)/fit.length
 
 
-class FeatureDetect(object):
+class FDSetup(object):
     '''
     Class that trains a feature detecting system based on an eigen
     model of incisors. Also computes a good search region.
@@ -148,7 +161,7 @@ class FeatureDetect(object):
         return Shape(np.hstack(ellipse[:amount_of_points, :].T))
 
 
-class ActiveShapeCreator(object):
+class ASMSetup(object):
     '''
     Class that creates a complete Active Shape Model.
     The Active Shape Model is initialised by first building a point distribution
@@ -157,7 +170,7 @@ class ActiveShapeCreator(object):
     in: String image directory
         String landmark directory
     '''
-    def __init__(self, images, landmarks_per_image, landmarks):
+    def __init__(self, images, landmarks_per_image, landmarks, k=8, levels=4):
         self.images = images
         self.landmarks_per_image = landmarks_per_image
         self.landmarks = landmarks
@@ -165,12 +178,12 @@ class ActiveShapeCreator(object):
         print '***Setting up Active Shape Model...'
         # 1. POINT DISTRIBUTION MODEL
         print '---Building Point-Distribution Model...'
-        self.pdmodel = self.pointdistributionmodel()
+        self.pdmodel = self.pointdistributionmodel(landmarks)
         print 'Done.'
 
         # 2. GRAYSCALE MODELs using multi-resolution images
         print '---Building Gray-Level Model pyramid...'
-        self.glmodel_pyramid = self.grayscalemodel_pyramid(k=8, levels=5)
+        self.glmodel_pyramid = self.grayscalemodel_pyramid(k=k, levels=levels)
         print 'Done.'
 
         # 3. ACTIVE SHAPE MODEL
@@ -178,11 +191,11 @@ class ActiveShapeCreator(object):
         self.activeshape = ActiveShapeModel(self.pdmodel, self.glmodel_pyramid)
         print 'Done.'
 
-    def pointdistributionmodel(self):
+    def pointdistributionmodel(self, landmarks):
         '''
         Create model of shape from input landmarks
         '''
-        return create_pdm(self.landmarks)
+        return create_pdm(landmarks)
 
     def grayscalemodel(self, images, k=0, reduction_factor=1):
         '''

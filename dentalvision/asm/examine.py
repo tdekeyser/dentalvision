@@ -39,19 +39,21 @@ class Examiner(object):
         glmodel = self.glmodel_pyramid[pyramid_level]
         # determine reduction based on pyramid level
         reduction = 2**pyramid_level
-        amount_of_points = model_points.length/2**pyramid_level
-        t = t/max(1, pyramid_level)
+        # define a ratio for the amount of points examined in each level
+        # point_ratio = max(1, pyramid_level)
+        # adjust number of examined on each side of the normal acc. to level
+        t = t/reduction
 
         i = 0
-        for m in range(amount_of_points):
-            m = m*(2**pyramid_level)
+        for m in range(model_points.length/reduction):
             i += 1
+            m = m*reduction
             # set model index (for mean/cov)
             glmodel.set_evaluation_index(m)
             # choose model points according to pyramid level
             prev, curr, nex = m-pyramid_level-2, m-pyramid_level-1, m-pyramid_level
             reduced_points = model_points/reduction
-            # get point and next
+            # get current, previous and next
             points = np.array([reduced_points.get(prev), reduced_points.get(curr), reduced_points.get(nex)])
             # get point that best matches gray levels
             new_points[:, curr] = self.get_best_match(glmodel, points, t=t)*reduction

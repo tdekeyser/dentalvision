@@ -101,7 +101,7 @@ class ActiveShapeModel(object):
             pose_para, c = self.fitter.fit(points, adjustments, n=n)
 
             # add constraints to the shape parameter
-            # c = self.constrain(c)
+            c = self.constrain(c)
 
             # transform the model according to the new parameters
             points = self.transform(pose_para, c)
@@ -109,6 +109,8 @@ class ActiveShapeModel(object):
             # look for change in shape parameter and stop if necessary
             shape_difference = c - b
             b = c
+
+            # plot.render_shape(self.pdmodel.deform(c))
 
             print '**** LEVEL ---', str(level)
             print '**** ITER ---', str(i)

@@ -63,7 +63,7 @@ def plot_eigenvectors(mean, eigenvectors):
 
 
 def plot_deformablemodel(model):
-    z = np.zeros(60)
+    z = np.zeros(59)
 
     # recreate the mean
     mode = model.deform(z)
@@ -103,7 +103,7 @@ def render_image(img, shape, color=None, title='Image'):
             (int(shape.x[i + 1]), int(shape.y[i + 1])), color, 5)
 
     render(img)
-    
+
 
 def render(img, title='img'):
     height = 600
