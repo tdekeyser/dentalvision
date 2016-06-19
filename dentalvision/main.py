@@ -63,10 +63,6 @@ def run():
     loader = DataLoader()
     training_set, test_set = loader.leave_one_out(test_index=0)
 
-    # remove some noise from the image data
-    for i in range(trainimages.shape[0]):
-        trainimages[i] = remove_noise(trainimages[i])
-
     # --------------- TRAINING ---------------- #
     trainlandmarks = training_set[1]
     # train a Feature Detection system
@@ -217,13 +213,16 @@ class ASMTraining(object):
     The Active Shape Model is initialised by first building a point distribution
     model and then analysing the gray levels around each landmark point.
     '''
-    def __init__(self, images, landmarks_per_image, landmarks, k=8, levels=4):
+    def __init__(self, training_set, k=8, levels=4):
         self.images, self.landmarks, self.landmarks_per_image = training_set
+        # remove some noise from the image data
+        for i in range(self.images.shape[0]):
+            self.images[i] = remove_noise(self.images[i])
 
         print '***Setting up Active Shape Model...'
         # 1. Train POINT DISTRIBUTION MODEL
         print '---Training Point-Distribution Model...'
-        self.pdmodel = self.pointdistributionmodel(landmarks)
+        self.pdmodel = self.pointdistributionmodel(self.landmarks)
 
         # 2. Train GRAYSCALE MODELs using multi-resolution images
         print '---Training Gray-Level Model pyramid...'
