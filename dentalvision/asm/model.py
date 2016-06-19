@@ -35,7 +35,7 @@ class ActiveShapeModel(object):
         self.examiner = Examiner(glmodel_pyramid)
         self.aligner = Aligner()
 
-    def multi_resolution_search(self, image, region, t=0, max_level=0, max_iter=5, n=None):
+    def multiresolution_search(self, image, region, t=0, max_level=0, max_iter=5, n=None):
         '''
         Perform Multi-resolution Search ASM algorithm.
 
@@ -46,9 +46,11 @@ class ActiveShapeModel(object):
                 normal of each point during an iteration (t>k)
             int max_levels; max amount of levels to be searched
             int max_iter; amount to stop iterations at each level
+        out: Shape region; newly fitted points
         '''
         if not isinstance(region, Shape):
             region = Shape(region)
+
         # create Gaussian pyramid of input image
         image_pyramid = gaussian_pyramid(image, levels=len(self.glmodel_pyramid))
 
@@ -61,7 +63,7 @@ class ActiveShapeModel(object):
             image = image_pyramid[level]
             # search in the image
             region = self.search(image, region, t=t, level=level, max_iter=max_iter, n=n)
-            # plot.render_image(image_pyramid[0], region, title='Result in level ' + str(level))
+            # plot.render_shape_to_image(image_pyramid[0], region, title='Result in level ' + str(level))
             # descend the pyramid
             level -= 1
 
@@ -94,11 +96,12 @@ class ActiveShapeModel(object):
         # perform algorithm
         i = 0
         shape_difference = 1
-        while abs(np.sum(shape_difference)) > 0.001:
+        while abs(np.sum(shape_difference)) > 0.05:
             # examine t pixels on the normals of all points in the model
             adjustments = self.examiner.examine(points, t=t, pyramid_level=level)
+
             # find the best parameters to fit the model to the examined points
-            pose_para, c = self.fitter.fit(points, adjustments, n=n)
+            pose_para, c = self.fitter.fit(points, adjustments, pyramid_level=level, n=n)
 
             # add constraints to the shape parameter
             c = self.constrain(c)
@@ -121,7 +124,6 @@ class ActiveShapeModel(object):
             i += 1
             if i == max_iter:
                 break
-            #####
 
         return points
 
@@ -140,7 +142,7 @@ class ActiveShapeModel(object):
         elements of the vector should agree to the following constraint:
           |v_i| < 3*sqrt(eigenval_i)
         '''
-        uplimit = 3*self.pdmodel.eigenvalues
+        uplimit = 3*np.sqrt(self.pdmodel.eigenvalues)
         lowlimit = -1*uplimit
         vector[vector > uplimit] = uplimit[np.where(vector > uplimit)]
         vector[vector < lowlimit] = lowlimit[np.where(vector < lowlimit)]

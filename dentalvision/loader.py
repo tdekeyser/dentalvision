@@ -13,12 +13,13 @@ LANDMARK_AMOUNT = 40            # amount of landmarks per tooth
 
 class DataLoader(object):
     '''
-    Loads images and landmarks, both as array and as list of arrays per image.
+    This class provides methods to load specific landmark datasets
+    for training and testing. It loads images and landmarks from
+    directory paths specified in constants IMAGE_DIR and LANDMARK_DIR.
     '''
     def __init__(self):
-        self.image_list = os.listdir(IMAGE_DIR)
-        self.landmark_list = os.listdir(LANDMARK_DIR)
-        self._load_datasets()
+        self.images = self._load_grayscale_images()
+        self.landmarks_per_image = self._load_landmarks_per_image()
 
     def leave_one_out(self, test_index=0):
         '''
@@ -34,37 +35,54 @@ class DataLoader(object):
         training_images = np.asarray(self.images[:test_index] + self.images[test_index+1:])
         test_images = self.images[test_index]
 
+        # create landmark training and test sets
         training_landmarks_per_image = np.vstack((self.landmarks_per_image[:test_index], self.landmarks_per_image[test_index+1:]))
 
-        # create landmark training and test sets
         training_landmarks = np.vstack(training_landmarks_per_image[:][:])
         test_landmarks = np.vstack(self.landmarks_per_image[test_index][:])
 
-        return training_images, test_images, training_landmarks, test_landmarks, training_landmarks_per_image
+        # compile training and test sets
+        training_set = [training_images, training_landmarks, training_landmarks_per_image]
+        test_set = [test_images, test_landmarks]
 
-    def _load_datasets(self):
-        '''
-        Load the image and landmark dataset.
-        '''
-        # compile images
-        self.images = []
-        for i in range(len(self.image_list)):
-            if self.image_list[i].endswith('.tif'):
-                path = IMAGE_DIR + self.image_list[i]
-                self.images.append(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2GRAY))
+        return training_set, test_set
 
-        # compile landmarks per image for convenience in grayscale level training
-        self.landmarks_per_image = []
+    def _load_grayscale_images(self):
+        '''
+        Load the images dataset.
+        '''
+        images = []
+        for i in os.listdir(IMAGE_DIR):
+            if i.endswith('.tif'):
+                path = IMAGE_DIR + i
+                images.append(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2GRAY))
+        return images
+
+    def _load_landmarks_per_image(self):
+        '''
+        Compile landmarks per image for convenience in grayscale level
+        training. This training phase needs an accurate relation between
+        the images and their corresponding landmarks.
+
+        Needs to be run after _load_grayscale_images()!
+        '''
+        if not self.images:
+            raise IOError('Images have not been loaded yet.')
+
+        landmark_list = os.listdir(LANDMARK_DIR)
+        landmarks_per_image = []
         for i in range(len(self.images)):
-            self.landmarks_per_image.append([self._load(LANDMARK_DIR + s) for s in self.landmark_list if 'landmarks'+str(i+1)+'-' in s])
-        self.landmarks_per_image = np.asarray(self.landmarks_per_image)
+            # search for landmarks that include reference to image in path
+            landmarks_per_image.append([self._parse(LANDMARK_DIR + s) for s in landmark_list if 'landmarks'+str(i+1)+'-' in s])
 
-    def _load(self, path):
+        return np.asarray(landmarks_per_image)
+
+    def _parse(self, path):
         '''
-        Load and parse the data from path, and return arrays of x and y coordinates
+        Parse the data from path directory and return arrays of x and y coordinates
         Data should be in the form (x1, y1)
 
-        in: String pathdirectory
+        in: String pathdirectory with list of landmarks (x1, y1, ..., xN, yN)
         out: 1xc array (x1, ..., xN, y1, ..., yN)
         '''
         data = np.loadtxt(path)

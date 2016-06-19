@@ -3,8 +3,6 @@ Preprocess data by performing generalised procrustes (shape) analysis.
 See Ross (https://cse.sc.edu/~songwang/CourseProj/proj2004/ross/ross.pdf) and
 Stegmann & Gomez (2002, https://graphics.stanford.edu/courses/cs164-09-spring/Handouts/paper_shape_spaces_imm403.pdf)
 for a summary of (generalised) procrustes analysis.
-
-@author: Tina Smets, Tom De Keyser
 '''
 import numpy as np
 from utils.structure import Shape

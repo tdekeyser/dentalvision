@@ -14,7 +14,7 @@ class Fitter(object):
         self.aligner = Aligner()
         self.start_pose = ()
 
-    def fit(self, prev_shape, new_shape, n=None):
+    def fit(self, prev_shape, new_shape, pyramid_level=0, n=None):
         '''
         Algorithm that finds the best shape parameters that match identified
         image points.
@@ -37,11 +37,11 @@ class Fitter(object):
         changed_pose = (Tx + dx, Ty + dy, s*ds, theta+dTheta)
 
         # align image with model
-        inv_pose = (Tx + dx, Ty + dy, s*ds, theta+dTheta)
-        y = self.aligner.invert_transform(new_shape, inv_pose)
+        y = self.aligner.invert_transform(new_shape, changed_pose)
 
         # SVD on scaled eigenvectors of the model
-        u, w, v = np.linalg.svd(self.pdmodel.scaled_eigenvectors, full_matrices=False)
+        eigenvectors = self.pdmodel.scaled_eigenvectors
+        u, w, v = np.linalg.svd(eigenvectors, full_matrices=False)
         W = np.zeros((u.shape[1], v.shape[0]))
 
         # define weight vector n

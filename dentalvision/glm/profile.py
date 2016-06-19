@@ -69,7 +69,6 @@ class Profile(object):
         '''
         prev, curr, nex = points
         return self._normal(prev, nex)
-        return (self._normal(prev, curr).dot(self._normal(curr, nex)))/2
 
     def _normal(self, a, b):
         '''

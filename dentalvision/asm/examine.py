@@ -27,7 +27,6 @@ class Examiner(object):
         with the grey-level model.
 
         in: matrix of pixels image
-            GreyLevelModel glmodel
             array of model points (x1, x2, ..., xN, y1, ..., yN)
             int t amount of pixels examined either side of the normal (t > k)
         out: Shape with adjustments (dx, dy) to better approximate target
@@ -39,19 +38,16 @@ class Examiner(object):
         glmodel = self.glmodel_pyramid[pyramid_level]
         # determine reduction based on pyramid level
         reduction = 2**pyramid_level
-        # define a ratio for the amount of points examined in each level
-        # point_ratio = max(1, pyramid_level)
         # adjust number of examined on each side of the normal acc. to level
-        t = t/reduction
+        t = t/(pyramid_level+1)
 
         i = 0
-        for m in range(model_points.length/reduction):
+        for m in range(model_points.length):
             i += 1
-            m = m*reduction
             # set model index (for mean/cov)
             glmodel.set_evaluation_index(m)
             # choose model points according to pyramid level
-            prev, curr, nex = m-pyramid_level-2, m-pyramid_level-1, m-pyramid_level
+            prev, curr, nex = m-2, m-1, m
             reduced_points = model_points/reduction
             # get current, previous and next
             points = np.array([reduced_points.get(prev), reduced_points.get(curr), reduced_points.get(nex)])
@@ -60,8 +56,8 @@ class Examiner(object):
         print 'Number of points examined:', str(i)
 
         #### Plot for TESTING
-        # plot.render_image(self.image, reduced_points, color=(255, 0, 0))
-        # plot.render_image(self.bigImage, np.hstack(new_points), color=(255, 0, 0))
+        # plot.render_shape_to_image(self.image, reduced_points, color=(255, 0, 0))
+        # plot.render_shape_to_image(self.bigImage, np.hstack(new_points), color=(255, 0, 0))
         ####
 
         return Shape(new_points)

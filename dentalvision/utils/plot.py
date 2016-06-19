@@ -89,7 +89,7 @@ def render_shape(shape):
     plt.show()
 
 
-def render_image(img, shape, color=None, title='Image'):
+def render_shape_to_image(img, shape, color=None, title='Image'):
     '''
     Draw shape over image
     '''
@@ -106,7 +106,7 @@ def render_image(img, shape, color=None, title='Image'):
 
 
 def render(img, title='img'):
-    height = 600
+    height = 800
     scale = height / float(img.shape[0])
     window_width = int(img.shape[1] * scale)
     window_height = int(img.shape[0] * scale)

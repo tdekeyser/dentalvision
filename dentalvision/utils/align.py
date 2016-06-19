@@ -62,7 +62,7 @@ class CoreAlign(object):
         return self.scale_and_rotate(translated, 1/s, theta, inverse=True)
 
 
-class CoreFinder(object):
+class TransformationFinder(object):
     '''
     Methods to get the correct pose parameters of a shape with
     respect to a target shape. For scaling and rotation, first
@@ -101,7 +101,7 @@ class CoreFinder(object):
         return (tcX - scX, tcY - scY)
 
 
-class Aligner(CoreAlign, CoreFinder):
+class Aligner(CoreAlign, TransformationFinder):
     '''
     Alignment class that combines the alignment methods from CoreAlign and the
     transformation variable finding methods from CoreFinder.

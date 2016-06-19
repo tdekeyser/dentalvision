@@ -10,7 +10,7 @@ TRAIN_AMOUNT = 112          # amount of training images
 TRAIN_DIM = 35200           # (multiplied) size of the training images
 
 
-def create_featuredetectionmodel():
+def create_featuredetector():
     # build training set
     training_images = build_training_array()
     # set up the detector instance
