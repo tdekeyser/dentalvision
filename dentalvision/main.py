@@ -62,15 +62,13 @@ def run():
     # ------------- LOAD DATA -------------- #
     loader = DataLoader()
     training_set, test_set = loader.leave_one_out(test_index=0)
-    # get specific subsets from training and test sets
-    trainimages, trainlandmarks, landmarks_per_image = training_set
-    testimage, testlandmarks = test_set
 
     # remove some noise from the image data
     for i in range(trainimages.shape[0]):
         trainimages[i] = remove_noise(trainimages[i])
 
     # --------------- TRAINING ---------------- #
+    trainlandmarks = training_set[1]
     # train a Feature Detection system
     featuredetector = FDTraining()
     # fully automatic:
@@ -82,9 +80,10 @@ def run():
     print 'Done.'
 
     # build and train an Active Shape Model
-    asm = ASMTraining(trainimages, landmarks_per_image, trainlandmarks, k=7, levels=4)
+    asm = ASMTraining(training_set, k=7, levels=4)
 
     # --------------- TESTING ----------------- #
+    testimage, testlandmarks = test_set
     # remove some noise from the test image
     testimage = remove_noise(testimage)
 
@@ -219,9 +218,7 @@ class ASMTraining(object):
     model and then analysing the gray levels around each landmark point.
     '''
     def __init__(self, images, landmarks_per_image, landmarks, k=8, levels=4):
-        self.images = images
-        self.landmarks_per_image = landmarks_per_image
-        self.landmarks = landmarks
+        self.images, self.landmarks, self.landmarks_per_image = training_set
 
         print '***Setting up Active Shape Model...'
         # 1. Train POINT DISTRIBUTION MODEL
