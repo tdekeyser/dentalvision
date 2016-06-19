@@ -70,9 +70,9 @@ def run():
     for i in range(trainimages.shape[0]):
         trainimages[i] = remove_noise(trainimages[i])
 
-    # --------------- SETUP ---------------- #
+    # --------------- TRAINING ---------------- #
     # train a Feature Detection system
-    featuredetector = FDSetup()
+    featuredetector = FDTraining()
     # fully automatic:
     featuredetector.search_region = featuredetector.scan_region(trainlandmarks, diff=25, searchStep=20)
     # semi-automatic:
@@ -82,9 +82,9 @@ def run():
     print 'Done.'
 
     # build and train an Active Shape Model
-    asm = ASMSetup(trainimages, landmarks_per_image, trainlandmarks, k=7, levels=4)
+    asm = ASMTraining(trainimages, landmarks_per_image, trainlandmarks, k=7, levels=4)
 
-    # --------------- TEST ----------------- #
+    # --------------- TESTING ----------------- #
     # remove some noise from the test image
     testimage = remove_noise(testimage)
 
@@ -150,7 +150,6 @@ def set_clicked_center(img):
 
     cv2.namedWindow("clicked")
     cv2.setMouseCallback("clicked", detect_click)
-    cv2.resizeWindow("clicked", 800, 600)
 
     while True:
         plot.render(img, title="clicked")
@@ -158,7 +157,7 @@ def set_clicked_center(img):
             return click
 
 
-class FDSetup(object):
+class FDTraining(object):
     '''
     Class that trains a feature detecting system based on an eigen
     model of incisors and on the computation of a suitable search region.
@@ -213,7 +212,7 @@ class FDSetup(object):
         return Shape(np.hstack(ellipse[:amount_of_points, :].T))
 
 
-class ASMSetup(object):
+class ASMTraining(object):
     '''
     Class that creates a complete Active Shape Model.
     The Active Shape Model is initialised by first building a point distribution
