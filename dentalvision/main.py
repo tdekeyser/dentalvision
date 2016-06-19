@@ -71,7 +71,6 @@ def run():
     featuredetector.search_region = featuredetector.scan_region(trainlandmarks, diff=25, searchStep=20)
     # semi-automatic:
     # featuredetector.search_region = ((880, 1130), (1350, 1670), 20)     # for first radiograph
-
     print '---Search space set to', featuredetector.search_region
     print 'Done.'
 
@@ -92,15 +91,14 @@ def run():
     matches = [featuredetector._ellipse(set_clicked_center(testimage))]
 
     for i in range(len(matches)):
-        # plot.render_image(testimages, init)
         # search and fit image
-        new_fit = asm.activeshape.multiresolution_search(testimage, matches[i], t=20, max_level=3, max_iter=20, n=None)
+        new_fit = asm.activeshape.multiresolution_search(testimage, matches[i], t=15, max_level=3, max_iter=20, n=None)
 
         # Find the target that the new fit represents in order
         # to compute the error. This is done by taking the smallest
         # MSE of all targets.
         mse = np.zeros((testlandmarks.shape[0], 1))
-        for i in range(testlandmarks.shape[0]):
+        for i in range(mse.shape[0]):
             mse[i] = mean_squared_error(testlandmarks[i], new_fit)
         best_fit_index = np.argmin(mse)
 
@@ -226,7 +224,7 @@ class ASMTraining(object):
 
         # 2. Train GRAYSCALE MODELs using multi-resolution images
         print '---Training Gray-Level Model pyramid...'
-        self.glmodel_pyramid = self.grayscalemodel_pyramid(k=k, levels=levels)
+        self.glmodel_pyramid = self.graylevelmodel_pyramid(k=k, levels=levels)
 
         # 3. Train ACTIVE SHAPE MODEL
         print '---Initialising Active Shape Model...'
@@ -240,7 +238,7 @@ class ASMTraining(object):
         '''
         return create_pdm(landmarks)
 
-    def grayscalemodel(self, images, k=0, reduction_factor=1):
+    def graylevelmodel(self, images, k=0, reduction_factor=1):
         '''
         Create a model of the local gray levels throughout the images.
 
@@ -251,7 +249,7 @@ class ASMTraining(object):
         '''
         return create_glm(images, np.asarray(self.landmarks_per_image)/reduction_factor, k=k)
 
-    def grayscalemodel_pyramid(self, levels=0, k=0):
+    def graylevelmodel_pyramid(self, levels=0, k=0):
         '''
         Create grayscale models for different levels of subsampled images.
         Each subsampling is done by removing half the pixels along
@@ -266,7 +264,7 @@ class ASMTraining(object):
         # create list of gray-level models
         glmodels = []
         for l in range(levels):
-            glmodels.append(self.grayscalemodel(multi_res[:, l], k=k, reduction_factor=2**l))
+            glmodels.append(self.graylevelmodel(multi_res[:, l], k=k, reduction_factor=2**l))
             print '---Created gray-level model of level ' + str(l)
         return glmodels
 
