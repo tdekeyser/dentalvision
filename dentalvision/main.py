@@ -220,15 +220,15 @@ class ASMTraining(object):
         print '***Setting up Active Shape Model...'
         # 1. Train POINT DISTRIBUTION MODEL
         print '---Training Point-Distribution Model...'
-        self.pdmodel = self.pointdistributionmodel(self.landmarks)
+        pdmodel = self.pointdistributionmodel(self.landmarks)
 
         # 2. Train GRAYSCALE MODELs using multi-resolution images
         print '---Training Gray-Level Model pyramid...'
-        self.glmodel_pyramid = self.graylevelmodel_pyramid(k=k, levels=levels)
+        glmodel_pyramid = self.graylevelmodel_pyramid(k=k, levels=levels)
 
         # 3. Train ACTIVE SHAPE MODEL
         print '---Initialising Active Shape Model...'
-        self.activeshape = ActiveShapeModel(self.pdmodel, self.glmodel_pyramid)
+        self.activeshape = ActiveShapeModel(pdmodel, glmodel_pyramid)
 
         print 'Done.'
 
