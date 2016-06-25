@@ -1,18 +1,24 @@
 '''
 Build a grey-level profile length 2k+1 along the normal to a point.
-
 '''
 import math
 import numpy as np
 
 
-class Profile(object):
+class Profiler(object):
     '''
     Class that creates a normal to input points and computes the 2k nearest
     pixels to that normal.
     '''
-    def __init__(self, k):
+    def __init__(self, k=0):
+        self.reset(k)
+
+    def reset(self, k):
+        '''
+        Reset profiler variables
+        '''
         self.k = k
+        self.normal = None
 
     def sample(self, points):
         '''
@@ -92,5 +98,5 @@ class Profile(object):
         '''
         Normalize a vector such that its sum is equal to 1.
         '''
-        div = np.sum(vector) if bool(np.sum(vector)) else 1
+        div = np.sum(np.absolute(vector)) if np.sum(np.absolute(vector)) > 0 else 1
         return vector/div

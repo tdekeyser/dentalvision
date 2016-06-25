@@ -74,4 +74,4 @@ class Shape(object):
         '''
         Split the Shape with steps of split_index.
         '''
-        return Shape((self.x[::split_index], self.y[::split_index]))
+        return Shape((self.x[::split_index], self.y[::split_index]))        

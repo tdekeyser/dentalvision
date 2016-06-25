@@ -6,6 +6,7 @@ parameter space (Cootes 2000, 12).
 See algorithm in Cootes (2000), p. 12-13.
 '''
 import numpy as np
+from scipy.spatial import distance
 
 from asm.fit import Fitter
 from asm.examine import Examiner
@@ -83,7 +84,6 @@ class ActiveShapeModel(object):
         '''
         # get initial parameters
         pose_para = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
-        b = np.zeros(self.pdmodel.dimension)
         # set initial fitting pose parameters
         self.fitter.start_pose = pose_para
 
@@ -95,10 +95,10 @@ class ActiveShapeModel(object):
 
         # perform algorithm
         i = 0
-        shape_difference = 1
-        while abs(np.sum(shape_difference)) > 0.05:
+        movement = np.zeros_like(points.length)
+        while np.sum(movement)/points.length <= 0.8:
             # examine t pixels on the normals of all points in the model
-            adjustments = self.examiner.examine(points, t=t, pyramid_level=level)
+            adjustments, movement = self.examiner.examine(points, t=t, pyramid_level=level)
 
             # find the best parameters to fit the model to the examined points
             pose_para, c = self.fitter.fit(points, adjustments, pyramid_level=level, n=n)
@@ -108,12 +108,6 @@ class ActiveShapeModel(object):
 
             # transform the model according to the new parameters
             points = self.transform(pose_para, c)
-
-            # look for change in shape parameter and stop if necessary
-            shape_difference = c - b
-            b = c
-
-            # plot.render_shape(self.pdmodel.deform(c))
 
             print '**** LEVEL ---', str(level)
             print '**** ITER ---', str(i)

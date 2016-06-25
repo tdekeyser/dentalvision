@@ -22,7 +22,7 @@ This file maintains the following procedure:
     detector is used that can switch between semi-automatic
     to fully automated search. Semi-automated search involved
     a search in a restricted space. Fully automated search
-    uses a trained approximation of a restricted search space.
+    uses a trained approximation of  restricted search space.
     Then, an Active Shape Model is trained using the loaded
     radiograph data. The model creates a shape model and a model
     of the gray level profiles around each model point.
@@ -50,9 +50,7 @@ from utils import plot
 MATCH_DIM = (320, 110)          # dimensions searched by feature detector
 LANDMARK_AMOUNT = 40            # amount of landmarks per tooth
 
-MSE_THRESHOLD = 2500            # maximally tolerable error
-
-click = ()
+MSE_THRESHOLD = 1000            # maximally tolerable error
 
 
 def run():
@@ -61,21 +59,21 @@ def run():
     '''
     # ------------- LOAD DATA -------------- #
     loader = DataLoader()
-    training_set, test_set = loader.leave_one_out(test_index=0)
+    training_set, test_set = loader.leave_one_out(test_index=5)
 
     # --------------- TRAINING ---------------- #
     trainlandmarks = training_set[1]
     # train a Feature Detection system
     featuredetector = FDTraining()
     # fully automatic:
-    featuredetector.search_region = featuredetector.scan_region(trainlandmarks, diff=25, searchStep=20)
+    # featuredetector.search_region = featuredetector.scan_region(trainlandmarks, diff=25, searchStep=20)
     # semi-automatic:
-    # featuredetector.search_region = ((880, 1130), (1350, 1670), 20)     # for first radiograph
+    featuredetector.search_region = ((880, 1130), (1350, 1670), 20)     # for first radiograph
     print '---Search space set to', featuredetector.search_region
     print 'Done.'
 
     # build and train an Active Shape Model
-    asm = ASMTraining(training_set, k=7, levels=4)
+    asm = ASMTraining(training_set, k=4, levels=3)
 
     # --------------- TESTING ----------------- #
     testimage, testlandmarks = test_set
@@ -84,15 +82,15 @@ def run():
 
     # perform feature matching to find init regions
     # print '---Searching for matches...'
-    # matches = featuredetector.match(testimages)
+    # matches = featuredetector.match(testimage)
     # print 'Done.'
 
     # or perform click
-    matches = [featuredetector._ellipse(set_clicked_center(testimage))]
+    matches = [featuredetector._ellipse(plot.set_clicked_center(testimage))]
 
     for i in range(len(matches)):
         # search and fit image
-        new_fit = asm.activeshape.multiresolution_search(testimage, matches[i], t=15, max_level=3, max_iter=20, n=None)
+        new_fit = asm.activeshape.multiresolution_search(testimage, matches[i], t=5, max_level=2, max_iter=30, n=None)
 
         # Find the target that the new fit represents in order
         # to compute the error. This is done by taking the smallest
@@ -103,14 +101,14 @@ def run():
         best_fit_index = np.argmin(mse)
 
         # implement maximally tolerable error
-        if int(mse[best_fit_index]) < MSE_THRESHOLD:
-            print 'MSE:', mse[best_fit_index]
+        # if int(mse[best_fit_index]) < MSE_THRESHOLD:
+        #     print 'MSE:', mse[best_fit_index]
             # plot target
-            plot.render_shape_to_image(testimage, testlandmarks[best_fit_index], color=(0, 0, 0), title='Results')
+        plot.render_shape_to_image(testimage, testlandmarks[best_fit_index], color=(0, 0, 0), title='Results')
             # plot result
-            plot.render_shape_to_image(testimage, new_fit)
-        else:
-            print 'Bad fit. Needs to restart.'
+        plot.render_shape_to_image(testimage, new_fit)
+        # else:
+        #     print 'Bad fit. Needs to restart.'
 
 
 def remove_noise(img):
@@ -130,24 +128,6 @@ def mean_squared_error(landmark, fit):
     out: int mse
     '''
     return np.sum((fit.vector - landmark)**2)/fit.length
-
-
-def set_clicked_center(img):
-    '''
-    Show image and register the coordinates of a click into
-    a global variable.
-    '''
-    def detect_click(event, x, y, flags, param):
-        global click
-        click = (x, y)
-
-    cv2.namedWindow("clicked")
-    cv2.setMouseCallback("clicked", detect_click)
-
-    while True:
-        plot.render(img, title="clicked")
-        if click:
-            return click
 
 
 class FDTraining(object):
@@ -201,7 +181,7 @@ class FDTraining(object):
         '''
         Returns points along the ellipse around a center.
         '''
-        ellipse = cv2.ellipse2Poly(tuple(center), (125, 80), 90, 0, 360, 9)
+        ellipse = cv2.ellipse2Poly(tuple(center), (110, 70), 90, 0, 360, 9)
         return Shape(np.hstack(ellipse[:amount_of_points, :].T))
 
 

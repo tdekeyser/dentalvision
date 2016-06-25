@@ -9,6 +9,7 @@ from utils.structure import Shape
 
 
 PLOT_STAGES = False
+click = ()
 
 
 def plot(choice, *args):
@@ -70,9 +71,9 @@ def plot_deformablemodel(model):
     plt.plot(mode.x, mode.y)
 
     # create variations
-    z[2] = 0.3
+    z[2] = 0.05
     z[1] = 0.1
-    z[0] = 0
+    z[0] = 0.1
     var = model.deform(z)
     plt.plot(var.x, var.y, marker='o')
 
@@ -106,7 +107,7 @@ def render_shape_to_image(img, shape, color=None, title='Image'):
 
 
 def render(img, title='img'):
-    height = 800
+    height = 1100
     scale = height / float(img.shape[0])
     window_width = int(img.shape[1] * scale)
     window_height = int(img.shape[0] * scale)
@@ -116,3 +117,23 @@ def render(img, title='img'):
     cv2.imshow(str(title), img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+
+def set_clicked_center(img):
+    '''
+    Show image and register the coordinates of a click into
+    a global variable.
+    '''
+    def detect_click(event, x, y, flags, param):
+        global click
+        click = (x, y)
+
+    cv2.namedWindow("clicked", cv2.WINDOW_NORMAL)
+    cv2.setMouseCallback("clicked", detect_click)
+
+    while True:
+        cv2.imshow("clicked", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        if click:
+            return click

@@ -25,9 +25,8 @@ def create_pdm(shapes):
 
     Step 1: Generalised Procrustes Analysis on the landmark data
     Step 2: Principal Component Analysis on the GPAed landmark data
-            This process will return an amount of eigenvectors and
-            a deformable model that can construct deviations from
-            the mean image.
+            This process will return an amount of eigenvectors from
+            which we construct deviations from the mean image.
     Step 3: Create a deformable model from the processed data
 
     In: list of directories of the landmark data
@@ -68,7 +67,7 @@ class PointDistributionModel(object):
 
     def deform(self, shape_param):
         '''
-        Reconstruct and image based on principal components and a set of
+        Reconstruct a shape based on principal components and a set of
         parameters that define a deformable model (see Cootes p. 6 eq. 2)
 
         in: Tx1 vector deformable model b

@@ -40,9 +40,8 @@ class Fitter(object):
         y = self.aligner.invert_transform(new_shape, changed_pose)
 
         # SVD on scaled eigenvectors of the model
-        eigenvectors = self.pdmodel.scaled_eigenvectors
-        u, w, v = np.linalg.svd(eigenvectors, full_matrices=False)
-        W = np.zeros((u.shape[1], v.shape[0]))
+        u, w, v = np.linalg.svd(self.pdmodel.scaled_eigenvectors, full_matrices=False)
+        W = np.zeros_like(w)
 
         # define weight vector n
         if n is None:
@@ -51,6 +50,6 @@ class Fitter(object):
 
         # calculate the shape vector
         W = np.diag(w/((w**2) + n))
-        c = (v.T).dot(W.T).dot(u.T).dot(y.vector)
+        c = (v.T).dot(W).dot(u.T).dot(y.vector)
 
         return changed_pose, c
