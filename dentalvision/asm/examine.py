@@ -2,7 +2,6 @@ import numpy as np
 
 from glm.profile import Profiler
 from utils.structure import Shape
-from utils import plot
 
 
 class Examiner(object):
@@ -55,11 +54,6 @@ class Examiner(object):
             # get point that best matches gray levels
             new_points[:, curr], movement[curr] = self.get_best_match(glmodel, points, t=t)
         print 'Number of points examined:', str(i)
-
-        #### Plot for TESTING
-        # plot.render_shape_to_image(self.image, reduced_points, color=(255, 0, 0))
-        # plot.render_shape_to_image(self.bigImage, np.hstack(new_points)*reduction, color=(255, 0, 0))
-        ####
 
         return Shape(new_points)*reduction, movement
 

@@ -6,7 +6,6 @@ each landmark. Instead of using actual grey levels, normalised derivatives are
 used. The Mahalanobis distance is used as an evaluation measure.
 '''
 import numpy as np
-import matplotlib.pyplot as plt
 
 from glm.profile import Profiler
 

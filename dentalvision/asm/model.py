@@ -6,14 +6,12 @@ parameter space (Cootes 2000, 12).
 See algorithm in Cootes (2000), p. 12-13.
 '''
 import numpy as np
-from scipy.spatial import distance
 
 from asm.fit import Fitter
 from asm.examine import Examiner
 from utils.align import Aligner
 from utils.structure import Shape
 from utils.multiresolution import gaussian_pyramid
-from utils import plot
 
 
 class ActiveShapeModel(object):
@@ -40,14 +38,15 @@ class ActiveShapeModel(object):
         '''
         Perform Multi-resolution Search ASM algorithm.
 
-        in: np array of guassian image pyramid
+        in: np array of training image
             np array region; array of coordinates that gives a rough
                 estimation of the target in form (x1, ..., xN, y1, ..., yN)
             int t; amount of pixels to be examined on each side of the
                 normal of each point during an iteration (t>k)
             int max_levels; max amount of levels to be searched
             int max_iter; amount to stop iterations at each level
-        out: Shape region; newly fitted points
+            int n; fitting parameter
+        out: Shape region; approximation of the target
         '''
         if not isinstance(region, Shape):
             region = Shape(region)
@@ -59,36 +58,41 @@ class ActiveShapeModel(object):
         self.examiner.bigImage = image_pyramid[0]
 
         level = max_level
+        max_level = True
         while level >= 0:
             # get image at level resolution
             image = image_pyramid[level]
             # search in the image
-            region = self.search(image, region, t=t, level=level, max_iter=max_iter, n=n)
-            # plot.render_shape_to_image(image_pyramid[0], region, title='Result in level ' + str(level))
+            region = self.search(image, region, t=t, level=level, max_level=max_level, max_iter=max_iter, n=n)
             # descend the pyramid
             level -= 1
+            max_level = False
 
         return region
 
-    def search(self, image, region, t=0, level=0, max_iter=5, n=None):
+    def search(self, image, region, t=0, level=0, max_level=False, max_iter=5, n=None):
         '''
         Perform the Active Shape Model algorithm in input region.
 
         in: array image; input image
-            array points; array of coordinates that gives a rough estimation
+            array region; array of coordinates that gives a rough estimation
                 of the target in form (x1, ..., xN, y1, ..., yN)
-            array b; current shape parameter
             int t; amount of pixels to be examined on each side of the normal
                 of each point during an iteration (t>k)
-        out: array shape_points; result of the algorithm
+            int level; level in the gaussian pyramid
+            int max_iter; amount to stop iterations at each level
+            int n; fitting parameter
+        out: array points; approximation of the target
         '''
-        # get initial parameters
-        pose_para = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
-        # set initial fitting pose parameters
-        self.fitter.start_pose = pose_para
-
-        # align model mean with region
-        points = self.aligner.transform(self.pdmodel.mean, pose_para)
+        if max_level:
+            # get initial parameters
+            pose_para = self.aligner.get_pose_parameters(self.pdmodel.mean, region)
+            # set initial fitting pose parameters
+            self.fitter.start_pose = pose_para
+            # align model mean with region
+            points = self.aligner.transform(self.pdmodel.mean, pose_para)
+        else:
+            points = region
 
         # set examiner image
         self.examiner.set_image(image)
@@ -96,16 +100,13 @@ class ActiveShapeModel(object):
         # perform algorithm
         i = 0
         movement = np.zeros_like(points.length)
-        while np.sum(movement)/points.length <= 0.8:
+        while np.sum(movement)/points.length <= 0.6:
             # examine t pixels on the normals of all points in the model
             adjustments, movement = self.examiner.examine(points, t=t, pyramid_level=level)
-
             # find the best parameters to fit the model to the examined points
             pose_para, c = self.fitter.fit(points, adjustments, pyramid_level=level, n=n)
-
             # add constraints to the shape parameter
             c = self.constrain(c)
-
             # transform the model according to the new parameters
             points = self.transform(pose_para, c)
 

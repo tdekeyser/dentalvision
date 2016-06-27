@@ -5,7 +5,7 @@ import numpy as np
 from featuredetect.eigen import EigenModel
 
 
-ROOT = '../Project Data/_Data/Slicings/nonflipped/'
+ROOT = '../Project Data/_Data/Slicings/flipped/'
 TRAIN_AMOUNT = 112          # amount of training images
 TRAIN_DIM = 35200           # (multiplied) size of the training images
 
@@ -66,7 +66,7 @@ class FeatureDetection(object):
         (x_min, x_max), (y_min, y_max), searchStep = search_region
 
         matches = []
-        for x in range(x_min, x_max, searchStep*4):
+        for x in range(x_min, x_max, searchStep):
             for y in range(y_min, y_max, searchStep):
                 # slice frame from the image
                 frame = self._slice(image, (x, y), match_frame)
@@ -95,7 +95,7 @@ class FeatureDetection(object):
         reconstructed_frame = self.eigenmodel.project_and_reconstruct(frame)
         # compute distance from mean
         dist = self.eigenmodel.dist_from_mean(reconstructed_frame)
-        return np.sqrt(np.sum(dist**2)/dist.size)
+        return np.sum(dist**2)/dist.size
 
     def _slice(self, img, center, dimension):
         '''

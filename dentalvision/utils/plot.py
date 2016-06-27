@@ -8,7 +8,9 @@ import matplotlib.pyplot as plt
 from utils.structure import Shape
 
 
+# set to True and results from GPA, PCA and PDM are visualised
 PLOT_STAGES = False
+# needed for manual initialisation
 click = ()
 
 
@@ -64,16 +66,16 @@ def plot_eigenvectors(mean, eigenvectors):
 
 
 def plot_deformablemodel(model):
-    z = np.zeros(59)
+    z = np.zeros(65)
 
     # recreate the mean
     mode = model.deform(z)
     plt.plot(mode.x, mode.y)
 
     # create variations
-    z[2] = 0.05
-    z[1] = 0.1
-    z[0] = 0.1
+    z[2] = 0.11
+    z[1] = 0.08
+    z[0] = 0.01
     var = model.deform(z)
     plt.plot(var.x, var.y, marker='o')
 
@@ -90,14 +92,12 @@ def render_shape(shape):
     plt.show()
 
 
-def render_shape_to_image(img, shape, color=None, title='Image'):
+def render_shape_to_image(img, shape, color=(255, 0, 0), title='Image'):
     '''
     Draw shape over image
     '''
     if not isinstance(shape, Shape):
         shape = Shape(shape)
-    if color is None:
-        color = (255, 0, 0)
 
     for i in range(shape.length - 1):
         cv2.line(img, (int(shape.x[i]), int(shape.y[i])),
