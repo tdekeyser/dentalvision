@@ -74,4 +74,7 @@ class Shape(object):
         '''
         Split the Shape with steps of split_index.
         '''
-        return Shape((self.x[::split_index], self.y[::split_index]))        
+        return Shape((self.x[::split_index], self.y[::split_index]))       
+
+    def merge(self, other):
+        return Shape(np.hstack((np.hstack((self.x, other.x)), np.hstack((self.y, other.y)))))

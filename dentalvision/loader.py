@@ -2,12 +2,14 @@ import os
 import cv2
 import numpy as np
 
+from utils.structure import Shape
 
-IMAGE_DIR = '../Project Data/_Data/Radiographs/r/'
+
+IMAGE_DIR = '../Project Data/_Data/Radiographs/'
 IMAGE_AMOUNT = 14
 IMAGE_DIM = (3023, 1597)
 
-LANDMARK_DIR = '../Project Data/_Data/Landmarks/l/'
+LANDMARK_DIR = '../Project Data/_Data/Landmarks/original/'
 LANDMARK_AMOUNT = 40            # amount of landmarks per tooth
 
 
@@ -72,8 +74,10 @@ class DataLoader(object):
         landmarks_per_image = []
         for i in range(len(self.images)):
             # search for landmarks that include reference to image in path
-            lms = [self._parse(LANDMARK_DIR + s) for s in os.listdir(LANDMARK_DIR) if 'landmarks'+str(i+1)+'-' in s]
-            landmarks_per_image.append(lms)
+            lms = [self._parse(LANDMARK_DIR + s) for s in os.listdir(LANDMARK_DIR) if ('landmarks'+str(i+1)+'-2.txt') in s]
+            lms2 = [self._parse(LANDMARK_DIR + s) for s in os.listdir(LANDMARK_DIR) if ('landmarks'+str(i+1)+'-3.txt') in s]
+            l = lms[0].merge(lms2[0])
+            landmarks_per_image.append([l.vector])
 
         return np.asarray(landmarks_per_image)
 
@@ -87,5 +91,5 @@ class DataLoader(object):
         '''
         data = np.loadtxt(path)
         x = np.absolute(data[::2, ])
-        y = np.absolute(data[1::2, ])
-        return np.hstack((x, y))
+        y = data[1::2, ]
+        return Shape(np.hstack((x, y)))

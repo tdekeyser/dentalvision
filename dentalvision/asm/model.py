@@ -12,6 +12,7 @@ from asm.examine import Examiner
 from utils.align import Aligner
 from utils.structure import Shape
 from utils.multiresolution import gaussian_pyramid
+# from utils import plot
 
 
 class ActiveShapeModel(object):
@@ -102,6 +103,7 @@ class ActiveShapeModel(object):
         movement = np.zeros_like(points.length)
         while np.sum(movement)/points.length <= 0.6:
             # examine t pixels on the normals of all points in the model
+            # plot.render_shape_to_image(image, points)
             adjustments, movement = self.examiner.examine(points, t=t, pyramid_level=level)
             # find the best parameters to fit the model to the examined points
             pose_para, c = self.fitter.fit(points, adjustments, pyramid_level=level, n=n)

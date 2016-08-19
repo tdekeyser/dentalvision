@@ -48,9 +48,9 @@ from utils import plot
 
 
 MATCH_DIM = (320, 110)          # dimensions searched by feature detector
-LANDMARK_AMOUNT = 40            # amount of landmarks per tooth
+LANDMARK_AMOUNT = 80            # amount of landmarks per tooth
 
-MSE_THRESHOLD = 6000            # maximally tolerable error
+MSE_THRESHOLD = 60000            # maximally tolerable error
 
 
 def run():
@@ -59,7 +59,7 @@ def run():
     '''
     # ------------- LOAD DATA -------------- #
     loader = DataLoader()
-    training_set, test_set = loader.leave_one_out(test_index=9)
+    training_set, test_set = loader.leave_one_out(test_index=0)
 
     # --------------- TRAINING ---------------- #
     trainlandmarks = training_set[1]
@@ -73,7 +73,7 @@ def run():
     print 'Done.'
 
     # build and train an Active Shape Model
-    asm = ASMTraining(training_set, k=7, levels=3)
+    asm = ASMTraining(training_set, k=3, levels=3)
 
     # --------------- TESTING ----------------- #
     testimage, testlandmarks = test_set
@@ -81,16 +81,16 @@ def run():
     testimage = remove_noise(testimage)
 
     # perform feature matching to find init regions
-    # print '---Searching for matches...'
-    # matches = featuredetector.match(testimage)
-    # print 'Done.'
+    print '---Searching for matches...'
+    matches = featuredetector.match(testimage)
+    print 'Done.'
 
     # or perform manual initialisation (click on center)
     matches = [featuredetector._ellipse(plot.set_clicked_center(testimage))]
 
     for i in range(len(matches)):
         # search and fit image
-        new_fit = asm.activeshape.multiresolution_search(testimage, matches[i], t=20, max_level=2, max_iter=10, n=0.001)
+        new_fit = asm.activeshape.multiresolution_search(testimage, matches[i], t=10, max_level=2, max_iter=10, n=0.2)
         # Find the target that the new fit represents in order
         # to compute the error. This is done by taking the smallest
         # MSE of all targets.
@@ -102,7 +102,6 @@ def run():
         if int(mse[best_fit_index]) < MSE_THRESHOLD:
             print 'MSE:', mse[best_fit_index]
             plot.render_shape_to_image(testimage, testlandmarks[best_fit_index], color=(0, 0, 0))
-            plot.render_shape_to_image(testimage, new_fit)
         else:
             print 'Bad fit. Needs to restart.'
 
@@ -177,7 +176,7 @@ class FDTraining(object):
         '''
         Returns points along the ellipse around a center.
         '''
-        ellipse = cv2.ellipse2Poly(tuple(center), (110, 70), 90, 0, 360, 9)
+        ellipse = cv2.ellipse2Poly(tuple(center), (80, 210), 90, 0, 360, 4)
         return Shape(np.hstack(ellipse[:amount_of_points, :].T))
 
 

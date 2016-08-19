@@ -9,7 +9,7 @@ from utils.structure import Shape
 
 
 # set to True and results from GPA, PCA and PDM are visualised
-PLOT_STAGES = False
+PLOT_STAGES = True
 # needed for manual initialisation
 click = ()
 
@@ -43,7 +43,7 @@ def plot_gpa(mean, aligned_shapes):
         ax, ay = np.split(a, 2)
         plt.scatter(ax, ay)
     axes = plt.gca()
-    axes.set_xlim([-0.8, 0.8])
+    # axes.set_xlim([-0.8, 0.8])
     plt.show()
 
 
@@ -56,7 +56,7 @@ def plot_eigenvectors(mean, eigenvectors):
     plt.plot(mx, my, marker='o')
 
     axes = plt.gca()
-    axes.set_xlim([-0.8, 0.8])
+    # axes.set_xlim([-0.8, 0.8])
 
     for i in range(6):
         vec = eigenvectors[:, i].T
@@ -66,22 +66,25 @@ def plot_eigenvectors(mean, eigenvectors):
 
 
 def plot_deformablemodel(model):
-    z = np.zeros(65)
+    z = np.zeros(model.eigenvectors.shape[1])
 
     # recreate the mean
     mode = model.deform(z)
     plt.plot(mode.x, mode.y)
 
     # create variations
-    z[2] = 0.11
-    z[1] = 0.08
-    z[0] = 0.01
+    z[0] = 0.8
     var = model.deform(z)
+    z[0] = 0
+    z[1] = 0.8
+    var2 = model.deform(z)
+    
     plt.plot(var.x, var.y, marker='o')
+    plt.plot(var2.x, var2.y, marker='o')
 
     axes = plt.gca()
-    axes.set_xlim([-1, 1])
-    axes.set_ylim([-0.5, 0.5])
+    # axes.set_xlim([-1, 1])
+    # axes.set_ylim([-0.5, 0.5])
     plt.show()
 
 
